@@ -5,14 +5,14 @@ using System.Text;
 
 namespace AutomationFramework
 {
-    public abstract class Module<TDataLayer, TResult> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer where TResult : class
+    public abstract class Module<TId, TDataLayer, TResult> : ModuleBase<TId, TDataLayer> where TDataLayer : IModuleDataLayer<TId> where TResult : class
     {
         /// <summary>
         /// Takes the stage module and stage module result as arguments and returns an IEnumerable of child stage modules
         /// </summary>
-        public Func<IModule, TResult, IEnumerable<IModule>> CreateChildren { get; set; }
+        public Func<IModule<TId>, TResult, IEnumerable<IModule<TId>>> CreateChildren { get; set; }
 
-        public Func<IModule, RunInfo, StagePath, TResult> Work { get; set; }
+        public Func<IModule<TId>, RunInfo<TId>, StagePath, TResult> Work { get; set; }
 
         internal protected override void Run()
         {
@@ -40,9 +40,9 @@ namespace AutomationFramework
         protected virtual TResult DoWork() => 
             Work == null ? default : Work.Invoke(this, RunInfo, StagePath);
 
-        public override IModule[] InvokeCreateChildren()
+        public override IModule<TId>[] InvokeCreateChildren()
         {
-            List<IModule> children = new List<IModule>();
+            List<IModule<TId>> children = new List<IModule<TId>>();
             CheckForCancellation();
             var result = GetResult();
             if (result == default(TResult))
@@ -51,7 +51,7 @@ namespace AutomationFramework
             }
             else
             {
-                children = CreateChildren?.Invoke(this, result)?.ToList() ?? new List<IModule>();
+                children = CreateChildren?.Invoke(this, result)?.ToList() ?? new List<IModule<TId>>();
                 if (!IsEnabled)
                     foreach (var child in children) child.IsEnabled = false;
             }

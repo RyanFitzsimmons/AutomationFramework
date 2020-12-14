@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class ModuleBase<TDataLayer> : IModule where TDataLayer : IModuleDataLayer
+    public abstract class ModuleBase<TId, TDataLayer> : IModule<TId> where TDataLayer : IModuleDataLayer<TId>
     {
         public ModuleBase()
         {
@@ -19,7 +19,7 @@ namespace AutomationFramework
         protected TDataLayer DataLayer { get; }
 
         protected ILogger Logger { get; private set; }
-        public RunInfo RunInfo { get; private set; }
+        public RunInfo<TId> RunInfo { get; private set; }
         public StagePath StagePath { get; private set; }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace AutomationFramework
         public virtual int MaxParallelChildren { get; set; } = 1;
         public Func<object> GetMetaDataFunc { get; private set; }
 
-        internal void SetProperties(RunInfo runInfo, StagePath path, Func<object> getMetaData, ILogger logger)
+        internal void SetProperties(RunInfo<TId> runInfo, StagePath path, Func<object> getMetaData, ILogger logger)
         {
             RunInfo = runInfo;
             StagePath = path;
@@ -60,7 +60,7 @@ namespace AutomationFramework
             }
         }
 
-        public void Run(RunInfo runInfo, StagePath path, Func<object> getMetaData, ILogger logger)
+        public void Run(RunInfo<TId> runInfo, StagePath path, Func<object> getMetaData, ILogger logger)
         {
             try
             {
@@ -99,7 +99,7 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
-        public abstract IModule[] InvokeCreateChildren();
+        public abstract IModule<TId>[] InvokeCreateChildren();
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 

@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class Module<TDataLayer> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer
+    public abstract class Module<TId, TDataLayer> : ModuleBase<TId, TDataLayer> where TDataLayer : IModuleDataLayer<TId>
     {
         /// <summary>
         /// Takes the stage module as an argument and returns an IEnumerable of child stage modules
         /// </summary>
-        public Func<IModule, IEnumerable<IModule>> CreateChildren { get; set; }
+        public Func<IModule<TId>, IEnumerable<IModule<TId>>> CreateChildren { get; set; }
 
-        public Action<IModule, RunInfo, StagePath> Work { get; set; }
+        public Action<IModule<TId>, RunInfo<TId>, StagePath> Work { get; set; }
 
         internal protected override void Run()
         {
@@ -46,10 +46,10 @@ namespace AutomationFramework
         protected virtual void DoWork() =>
             Work?.Invoke(this, RunInfo, StagePath);
 
-        public override IModule[] InvokeCreateChildren()
+        public override IModule<TId>[] InvokeCreateChildren()
         {
             CheckForCancellation();
-            var children = CreateChildren?.Invoke(this)?.ToArray() ?? Array.Empty<IModule>();
+            var children = CreateChildren?.Invoke(this)?.ToArray() ?? Array.Empty<IModule<TId>>();
             if (!IsEnabled)
                 foreach (var child in children) child.IsEnabled = false;
             return children;

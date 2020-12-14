@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestModule : Module<ModuleTestDataLayer>
+    public class TestModule : Module<string, ModuleTestDataLayer>
     {
         public override string Name { get; set; } = "Test Stage";
 

@@ -20,7 +20,7 @@ namespace AutomationFramework.UnitTests
         public void Test1()
         {
             var job = new TestKernel(1, new TestLogger());
-            job.Run(RunInfo.Empty);
+            job.Run(RunInfo<string>.Empty);
             Test1Results(job);
         }
 
@@ -28,7 +28,7 @@ namespace AutomationFramework.UnitTests
         public void Test1Parallel()
         {
             var job = new TestKernel(3, new TestLogger());
-            job.Run(RunInfo.Empty);
+            job.Run(RunInfo<string>.Empty);
             Test1Results(job);
         }
 
@@ -112,27 +112,27 @@ namespace AutomationFramework.UnitTests
         public void GetIsValidTest()
         {
             // valid run infos
-            var validInfos = new List<RunInfo>
+            var validInfos = new List<RunInfo<string>>
             {
-                new RunInfo { Type = RunType.Run, JobId = null, RequestId = null, Path = StagePath.Empty },
-                new RunInfo { Type = RunType.RunFrom, JobId = 1, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo { Type = RunType.RunSingle, JobId = 1, RequestId = null, Path = new StagePath { Indices = 1 } }
+                new RunInfo<string> { Type = RunType.Run, JobId = null, RequestId = null, Path = StagePath.Empty },
+                new RunInfo<string> { Type = RunType.RunFrom, JobId = "1", RequestId = null, Path = new StagePath { Indices = 1 } },
+                new RunInfo<string> { Type = RunType.RunSingle, JobId = "1", RequestId = null, Path = new StagePath { Indices = 1 } }
             };
 
             // invalid run infos
-            var invalidInfos = new List<RunInfo>
+            var invalidInfos = new List<RunInfo<string>>
             {
-                new RunInfo { Type = RunType.Run, JobId = 1, RequestId = null, Path = StagePath.Empty },
-                new RunInfo { Type = RunType.Run, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo { Type = RunType.Run, JobId = 1, RequestId = null, Path = new StagePath { Indices = 1 } },
+                new RunInfo<string> { Type = RunType.Run, JobId = "1", RequestId = null, Path = StagePath.Empty },
+                new RunInfo<string> { Type = RunType.Run, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
+                new RunInfo<string> { Type = RunType.Run, JobId = "1", RequestId = null, Path = new StagePath { Indices = 1 } },
 
-                new RunInfo { Type = RunType.RunFrom, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo { Type = RunType.RunFrom, JobId = 1, RequestId = null, Path = StagePath.Empty },
-                new RunInfo { Type = RunType.RunFrom, JobId = null, RequestId = null, Path = StagePath.Empty },
+                new RunInfo<string> { Type = RunType.RunFrom, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
+                new RunInfo<string> { Type = RunType.RunFrom, JobId = "1", RequestId = null, Path = StagePath.Empty },
+                new RunInfo<string> { Type = RunType.RunFrom, JobId = null, RequestId = null, Path = StagePath.Empty },
 
-                new RunInfo { Type = RunType.RunSingle, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo { Type = RunType.RunSingle, JobId = 1, RequestId = null, Path = StagePath.Empty },
-                new RunInfo { Type = RunType.RunSingle, JobId = null, RequestId = null, Path = StagePath.Empty }
+                new RunInfo<string> { Type = RunType.RunSingle, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
+                new RunInfo<string> { Type = RunType.RunSingle, JobId = "1", RequestId = null, Path = StagePath.Empty },
+                new RunInfo<string> { Type = RunType.RunSingle, JobId = null, RequestId = null, Path = StagePath.Empty }
             };
 
             string exMsg;

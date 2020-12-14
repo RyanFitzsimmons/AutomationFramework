@@ -4,10 +4,10 @@ using System.Text;
 
 namespace AutomationFramework
 {
-    public interface IKernel
+    public interface IKernel<TId>
     {
         string Version { get; }
         string Name { get; }
-        void Run(RunInfo runInfo, Func<object> getMetaData = null);
+        void Run(RunInfo<TId> runInfo, Func<object> getMetaData = null);
     }
 }

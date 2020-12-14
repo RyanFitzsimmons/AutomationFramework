@@ -5,14 +5,28 @@ using System.Text;
 namespace AutomationFramework
 {
     [Serializable]
-    public struct RunInfo
+    public struct RunInfo<TId>
     {
-        public RunType Type;
-        public object JobId;
-        public object RequestId;
-        public StagePath Path;
+        public RunInfo(RunType type, TId jobId, TId requestId, StagePath path)
+        {
+            Type = type;
+            JobId = jobId;
+            RequestId = requestId;
+            Path = path;
+        }
 
-        public static RunInfo Empty { get => new RunInfo { Type = RunType.Run, JobId = null, RequestId = null, Path = StagePath.Empty }; }
+        public RunType Type;
+        public StagePath Path;
+        /// <summary>
+        /// Should only be used to store immutable types
+        /// </summary>
+        public TId JobId;
+        /// <summary>
+        /// Should only be used to store immutable types
+        /// </summary>
+        public TId RequestId;
+
+        public static RunInfo<TId> Empty { get { return new RunInfo<TId>(RunType.Run, default, default, StagePath.Empty); } }
 
         public bool GetIsValid(out string exceptionMsg)
         {
@@ -35,9 +49,9 @@ namespace AutomationFramework
 
         public bool GetIsRunWithJobId(out string exceptionMsg)
         {
-            if (Type == RunType.Run && JobId != null)
+            if (Type == RunType.Run && !EqualityComparer<TId>.Default.Equals(JobId, default))
             {
-                exceptionMsg = "The job ID must be null for run type 'Run'";
+                exceptionMsg = "The job ID must be empty for run type 'Run'";
                 return true;
             }
 
@@ -59,7 +73,7 @@ namespace AutomationFramework
 
         public bool GetIsRunFromWithNoJobId(out string exceptionMsg)
         {
-            if (Type == RunType.RunFrom && JobId == null)
+            if (Type == RunType.RunFrom && EqualityComparer<TId>.Default.Equals(JobId, default))
             {
                 exceptionMsg = "A job ID must be provided for run type 'RunFrom'";
                 return true;
@@ -83,7 +97,7 @@ namespace AutomationFramework
 
         public bool GetIsRunOnlyWithNoJobId(out string exceptionMsg)
         {
-            if (Type == RunType.RunSingle && JobId == null)
+            if (Type == RunType.RunSingle && EqualityComparer<TId>.Default.Equals(JobId, default))
             {
                 exceptionMsg = "A job ID must be provided for run type 'RunOnly'";
                 return true;
@@ -114,12 +128,12 @@ namespace AutomationFramework
 
         public override bool Equals(object obj)
         {
-            if (!(obj is RunInfo)) return false;
-            var runInfo = (RunInfo)obj;
-            return this.JobId == runInfo.JobId &&
-                this.RequestId == runInfo.RequestId &&
-                this.Path == runInfo.Path &&
-                this.Type == runInfo.Type;
+            if (!(obj is RunInfo<TId>)) return false;
+            var runInfo = (RunInfo<TId>)obj;
+            return EqualityComparer<TId>.Default.Equals(JobId, runInfo.JobId) &&
+                EqualityComparer<TId>.Default.Equals(RequestId, runInfo.RequestId) &&
+                Path == runInfo.Path &&
+                Type == runInfo.Type;
         }
 
         public override int GetHashCode()
@@ -127,14 +141,19 @@ namespace AutomationFramework
             return HashCode.Combine(JobId, RequestId, Path, Type.GetHashCode());
         }
 
-        public static bool operator ==(RunInfo a, RunInfo b)
+        public static bool operator ==(RunInfo<TId> a, RunInfo<TId> b)
         {
             return a.Equals(b);
         }
 
-        public static bool operator !=(RunInfo a, RunInfo b)
+        public static bool operator !=(RunInfo<TId> a, RunInfo<TId> b)
         {
             return !a.Equals(b);
+        }
+
+        public override string ToString()
+        {
+            return $"{Type}-{JobId}-{RequestId}-{Path}";
         }
     }
 }

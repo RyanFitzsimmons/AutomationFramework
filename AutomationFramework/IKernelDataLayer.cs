@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public interface IKernelDataLayer
+    public interface IKernelDataLayer<TId>
     {
-        object CreateRequest(RunInfo runInfo, object metaData);
-        object CreateJob(IKernel kernel);
-        void CheckExistingJob(object id, string version);
-        bool GetIsEmptyId(object id);
+        TId CreateRequest(RunInfo<TId> runInfo, object metaData);
+        TId CreateJob(IKernel<TId> kernel);
+        void CheckExistingJob(TId id, string version);
+        bool GetIsEmptyId(TId id);
     }
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestKernel : KernelBase<KernelTestDataLayer>
+    public class TestKernel : KernelBase<string, KernelTestDataLayer>
     {
         public TestKernel(int maxParallelChildren, ILogger logger = null) : base(logger)
         {
@@ -17,9 +17,9 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         private int MaxParallelChildren { get; }
 
-        public List<IModule> TestModules { get; private set; } = new List<IModule>();
+        public List<IModule<string>> TestModules { get; private set; } = new List<IModule<string>>();
 
-        protected override IModule CreateStages()
+        protected override IModule<string> CreateStages()
         {
             var root = new TestModuleWithResult()
             {
@@ -30,7 +30,7 @@ namespace AutomationFramework.UnitTests.TestSetup
             TestModules.Add(root);
             root.CreateChildren = (m, r) =>
             {
-                var children = new List<IModule>();
+                var children = new List<IModule<string>>();
                 for (int i = 0; i < 3; i++)
                     children.Add(CreateChildModule1(i));
                 return children;
@@ -38,7 +38,7 @@ namespace AutomationFramework.UnitTests.TestSetup
             return root;
         }
 
-        private IModule CreateChildModule1(int index)
+        private IModule<string> CreateChildModule1(int index)
         {
             var child = new TestModuleWithResult()
             {
@@ -49,7 +49,7 @@ namespace AutomationFramework.UnitTests.TestSetup
             TestModules.Add(child);
             child.CreateChildren = (m, r) =>
             {
-                var children = new List<IModule>();
+                var children = new List<IModule<string>>();
                 for (int i = 0; i < 3; i++)
                     children.Add(CreateChildModule2(i));
                 return children;
@@ -57,7 +57,7 @@ namespace AutomationFramework.UnitTests.TestSetup
             return child;
         }
 
-        private IModule CreateChildModule2(int index)
+        private IModule<string> CreateChildModule2(int index)
         {
             var child = new TestModuleWithResult()
             {

@@ -6,26 +6,26 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class KernelTestDataLayer : IKernelDataLayer
+    public class KernelTestDataLayer : IKernelDataLayer<string>
     {
-        public void CheckExistingJob(object id, string version)
+        public void CheckExistingJob(string id, string version)
         {
             throw new NotSupportedException("Data layer is for Run type only");
         }
 
-        public object CreateJob(IKernel kernel)
+        public string CreateJob(IKernel<string> kernel)
         {
             return "Test Job ID";
         }
 
-        public object CreateRequest(RunInfo runInfo, object metaData)
+        public string CreateRequest(RunInfo<string> runInfo, object metaData)
         {
             return "Test Request ID";
         }
 
-        public bool GetIsEmptyId(object id)
+        public bool GetIsEmptyId(string id)
         {
-            return string.IsNullOrWhiteSpace((string)id);
+            return string.IsNullOrWhiteSpace(id);
         }
     }
 }
