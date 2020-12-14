@@ -54,7 +54,7 @@ namespace AutomationFramework
             if (string.IsNullOrEmpty(s)) return Empty;
             var split = SplitString(s);
             List<int> ints = new List<int>();
-            if (split == null)
+            if (split != null)
                 foreach (var index in split)
                     ints.Add(int.Parse(index));
             else
