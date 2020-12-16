@@ -7,18 +7,17 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public interface IModule<TId>
+    public interface IModule
     {
         int MaxParallelChildren { get; set; }
         string Name { get; set; }
         bool IsEnabled { get; set; }
-        RunInfo<TId> RunInfo { get; }
+        IRunInfo RunInfo { get; }
         StagePath StagePath { get; }
-        Func<object> GetMetaDataFunc { get; }
 
         CancellationToken GetCancellationToken();
-        void Run(RunInfo<TId> runInfo, StagePath path, Func<object> getMetaData, ILogger logger);
+        void Run(IRunInfo runInfo, StagePath path, object metaData, ILogger logger);
         void Cancel();
-        IModule<TId>[] InvokeCreateChildren();
+        void InvokeConfigureChild(IModule child);
     }
 }

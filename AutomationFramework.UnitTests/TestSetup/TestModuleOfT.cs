@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestModuleWithResult : Module<string, ModuleTestDataLayer, TestModuleResult>
+    public class TestModuleWithResult : Module<ModuleTestDataLayer, TestModuleResult>
     {
         public override string Name { get; set; } = "Test Stage With Result";
 

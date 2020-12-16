@@ -2,6 +2,7 @@ using AutomationFramework.UnitTests.TestSetup;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,14 +42,14 @@ namespace AutomationFramework.UnitTests
                 switch (module.StagePath.ToString())
                 {
                     case "1":
-                    case "12":
-                    case "13":
-                    case "121":
-                    case "122":
-                    case "123":
-                    case "131":
-                    case "132":
-                    case "133":
+                    case "1-2":
+                    case "1-3":
+                    case "1-2-1":
+                    case "1-2-2":
+                    case "1-2-3":
+                    case "1-3-1":
+                    case "1-3-2":
+                    case "1-3-3":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -70,7 +71,9 @@ namespace AutomationFramework.UnitTests
                                     Assert.Equal("Set Status Completed", action);
                                     break;
                                 case 5:
-                                    if (module.CreateChildren != null)
+                                case 6:
+                                case 7:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -78,10 +81,10 @@ namespace AutomationFramework.UnitTests
                             }
                         }
                         break;
-                    case "11":
-                    case "111":
-                    case "112":
-                    case "113":
+                    case "1-1":
+                    case "1-1-1":
+                    case "1-1-2":
+                    case "1-1-3":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -94,7 +97,9 @@ namespace AutomationFramework.UnitTests
                                     Assert.Equal("Set Status Disabled", action);
                                     break;
                                 case 2:
-                                    if (module.CreateChildren != null)
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -114,25 +119,25 @@ namespace AutomationFramework.UnitTests
             // valid run infos
             var validInfos = new List<RunInfo<string>>
             {
-                new RunInfo<string> { Type = RunType.Run, JobId = null, RequestId = null, Path = StagePath.Empty },
-                new RunInfo<string> { Type = RunType.RunFrom, JobId = "1", RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo<string> { Type = RunType.RunSingle, JobId = "1", RequestId = null, Path = new StagePath { Indices = 1 } }
+                new RunInfo<string>(RunType.Run, null, null, StagePath.Empty),
+                new RunInfo<string>(RunType.RunFrom, "1", null, StagePath.Root),
+                new RunInfo<string>(RunType.RunSingle, "1", null, StagePath.Root)
             };
 
             // invalid run infos
             var invalidInfos = new List<RunInfo<string>>
             {
-                new RunInfo<string> { Type = RunType.Run, JobId = "1", RequestId = null, Path = StagePath.Empty },
-                new RunInfo<string> { Type = RunType.Run, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo<string> { Type = RunType.Run, JobId = "1", RequestId = null, Path = new StagePath { Indices = 1 } },
+                new RunInfo<string>(RunType.Run, "1", null, StagePath.Empty),
+                new RunInfo<string>(RunType.Run, null, null, StagePath.Root),
+                new RunInfo<string>(RunType.Run, "1", null, StagePath.Root),
 
-                new RunInfo<string> { Type = RunType.RunFrom, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo<string> { Type = RunType.RunFrom, JobId = "1", RequestId = null, Path = StagePath.Empty },
-                new RunInfo<string> { Type = RunType.RunFrom, JobId = null, RequestId = null, Path = StagePath.Empty },
+                new RunInfo<string>(RunType.RunFrom, null, null, StagePath.Root),
+                new RunInfo<string>(RunType.RunFrom, "1", null, StagePath.Empty),
+                new RunInfo<string>(RunType.RunFrom, null, null, StagePath.Empty),
 
-                new RunInfo<string> { Type = RunType.RunSingle, JobId = null, RequestId = null, Path = new StagePath { Indices = 1 } },
-                new RunInfo<string> { Type = RunType.RunSingle, JobId = "1", RequestId = null, Path = StagePath.Empty },
-                new RunInfo<string> { Type = RunType.RunSingle, JobId = null, RequestId = null, Path = StagePath.Empty }
+                new RunInfo<string>(RunType.RunSingle, null, null, StagePath.Root),
+                new RunInfo<string>(RunType.RunSingle, "1", null, StagePath.Empty),
+                new RunInfo<string>(RunType.RunSingle, null, null, StagePath.Empty)
             };
 
             string exMsg;
@@ -156,19 +161,19 @@ namespace AutomationFramework.UnitTests
         {
             new Dictionary<RelationNames, StagePath>
             {
-                { RelationNames.Ancestor, new StagePath { Indices = 1 } },
-                { RelationNames.Child, new StagePath { Indices = 1234 } },
-                { RelationNames.Descendant, new StagePath { Indices = 12345 } },
-                { RelationNames.Parent, new StagePath { Indices = 12 } },
-                { RelationNames.Self, new StagePath { Indices = 123 } },
+                { RelationNames.Ancestor, StagePath.Root },
+                { RelationNames.Child, new StagePath(1, 2, 3, 4) },
+                { RelationNames.Descendant, new StagePath(1, 2, 3, 4, 5) },
+                { RelationNames.Parent, new StagePath(1, 2) },
+                { RelationNames.Self, new StagePath(1, 2, 3) },
             },
             new Dictionary<RelationNames, StagePath>
             {
-                { RelationNames.Ancestor, new StagePath { Indices = 2 } },
-                { RelationNames.Child, new StagePath { Indices = 2234 } },
-                { RelationNames.Descendant, new StagePath { Indices = 22345 } },
-                { RelationNames.Parent, new StagePath { Indices = 22 } },
-                { RelationNames.Self, new StagePath { Indices = 224 } },
+                { RelationNames.Ancestor, new StagePath(2) },
+                { RelationNames.Child, new StagePath(2, 2, 3, 4) },
+                { RelationNames.Descendant, new StagePath(2, 2, 3, 4, 5) },
+                { RelationNames.Parent, new StagePath(2, 2) },
+                { RelationNames.Self, new StagePath(2, 2, 4) },
             },
         };
 
@@ -252,7 +257,7 @@ namespace AutomationFramework.UnitTests
         public void EqualsTest()
         {
             var self = Sets[0][RelationNames.Self];
-            var self2 = new StagePath { Indices = 123 };
+            var self2 = new StagePath(1, 2, 3);
             var self3 = Sets[1][RelationNames.Self];
 
             Assert.True(self.Equals(self));

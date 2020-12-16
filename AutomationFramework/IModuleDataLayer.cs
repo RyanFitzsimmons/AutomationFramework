@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public interface IModuleDataLayer<TId>
+    public interface IModuleDataLayer
     {
-        void CreateStage(IModule<TId> module);
-        void SetStatus(IModule<TId> module, StageStatuses status);
+        void CreateStage(IModule module);
+        void SetStatus(IModule module, StageStatuses status);
 
-        void SaveResult<TResult>(IModule<TId> module, TResult result) where TResult : class;
-        TResult GetCurrentResult<TResult>(IModule<TId> module) where TResult : class;
-        TResult GetPreviousResult<TResult>(IModule<TId> module) where TResult : class;
+        void SaveResult<TResult>(IModule module, TResult result) where TResult : class;
+        TResult GetCurrentResult<TResult>(IModule module) where TResult : class;
+        TResult GetPreviousResult<TResult>(IModule module) where TResult : class;
     }
 }

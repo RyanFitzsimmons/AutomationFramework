@@ -5,14 +5,14 @@ using System.Text;
 
 namespace AutomationFramework
 {
-    public abstract class Module<TId, TDataLayer, TResult> : ModuleBase<TId, TDataLayer> where TDataLayer : IModuleDataLayer<TId> where TResult : class
+    public abstract class Module<TDataLayer, TResult> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer where TResult : class
     {
         /// <summary>
-        /// Takes the stage module and stage module result as arguments and returns an IEnumerable of child stage modules
+        /// Takes the stage module, stage module result and an IEnumerable of child stage modules
         /// </summary>
-        public Func<IModule<TId>, TResult, IEnumerable<IModule<TId>>> CreateChildren { get; set; }
+        public Action<IModule, TResult, IModule> ConfigureChildWithResult { get; set; }
 
-        public Func<IModule<TId>, RunInfo<TId>, StagePath, TResult> Work { get; set; }
+        public Func<IModule, IRunInfo, StagePath, TResult> Work { get; set; }
 
         internal protected override void Run()
         {
@@ -40,22 +40,14 @@ namespace AutomationFramework
         protected virtual TResult DoWork() => 
             Work == null ? default : Work.Invoke(this, RunInfo, StagePath);
 
-        public override IModule<TId>[] InvokeCreateChildren()
+        public override void InvokeConfigureChild(IModule child)
         {
-            List<IModule<TId>> children = new List<IModule<TId>>();
             CheckForCancellation();
             var result = GetResult();
-            if (result == default(TResult))
-            {
-                Logger.Warning($"{this} no result found");
-            }
-            else
-            {
-                children = CreateChildren?.Invoke(this, result)?.ToList() ?? new List<IModule<TId>>();
-                if (!IsEnabled)
-                    foreach (var child in children) child.IsEnabled = false;
-            }
-            return children.ToArray();
+            if (result == default(TResult)) Logger.Warning($"{this} no result found");
+            else ConfigureChildWithResult?.Invoke(this, result, child); 
+
+            if (!IsEnabled) child.IsEnabled = false;
         }
 
         private TResult GetResult()

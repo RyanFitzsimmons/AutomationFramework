@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestKernel : KernelBase<string, KernelTestDataLayer>
+    public class TestKernel : KernelBase<KernelTestDataLayer>
     {
         public TestKernel(int maxParallelChildren, ILogger logger = null) : base(logger)
         {
@@ -17,56 +17,48 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         private int MaxParallelChildren { get; }
 
-        public List<IModule<string>> TestModules { get; private set; } = new List<IModule<string>>();
+        public List<IModule> TestModules { get; private set; } = new List<IModule>();
 
-        protected override IModule<string> CreateStages()
+        protected override IStageBuilder Configure()
         {
-            var root = new TestModuleWithResult()
+            var builder = GetStageBuilder<TestModuleWithResult>();
+            builder.Configure((m) =>
             {
-                Name = Name + " " + 0,
-                IsEnabled = true,
-                MaxParallelChildren = MaxParallelChildren
-            };
-            TestModules.Add(root);
-            root.CreateChildren = (m, r) =>
-            {
-                var children = new List<IModule<string>>();
-                for (int i = 0; i < 3; i++)
-                    children.Add(CreateChildModule1(i));
-                return children;
-            };
-            return root;
+                m.Name = Name + " " + 0;
+                m.IsEnabled = true;
+                m.MaxParallelChildren = MaxParallelChildren;
+            });
+
+            for (int i = 0; i < 3; i++)
+                builder.Add<TestModuleWithResult>((b) => CreateChildModule1(b, i));
+
+            TestModules.AddRange(builder.BuildToArray(StagePath.Root));
+            return builder;
         }
 
-        private IModule<string> CreateChildModule1(int index)
+        private IStageBuilder CreateChildModule1(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            var child = new TestModuleWithResult()
+            builder.Configure((m) =>
             {
-                Name = Name + " " + index,
-                IsEnabled = index != 0,
-                MaxParallelChildren = MaxParallelChildren
-            };
-            TestModules.Add(child);
-            child.CreateChildren = (m, r) =>
-            {
-                var children = new List<IModule<string>>();
-                for (int i = 0; i < 3; i++)
-                    children.Add(CreateChildModule2(i));
-                return children;
-            };
-            return child;
+                m.Name = Name + " " + index;
+                m.IsEnabled = index != 0;
+                m.MaxParallelChildren = MaxParallelChildren;
+            });
+
+            for (int i = 0; i < 3; i++)
+                builder.Add<TestModuleWithResult>((b) => CreateChildModule2(b, i));
+
+            return builder;
         }
 
-        private IModule<string> CreateChildModule2(int index)
+        private IStageBuilder CreateChildModule2(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            var child = new TestModuleWithResult()
+            return builder.Configure((m) =>
             {
-                Name = Name + " " + index,
-                IsEnabled = true,
-                MaxParallelChildren = MaxParallelChildren
-            };
-            TestModules.Add(child);
-            return child;
+                m.Name = Name + " " + index;
+                m.IsEnabled = true;
+                m.MaxParallelChildren = MaxParallelChildren;
+            });
         }
     }
 }

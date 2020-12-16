@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class ModuleBase<TId, TDataLayer> : IModule<TId> where TDataLayer : IModuleDataLayer<TId>
+    public abstract class ModuleBase<TDataLayer> : IModule where TDataLayer : IModuleDataLayer
     {
         public ModuleBase()
         {
@@ -19,7 +19,7 @@ namespace AutomationFramework
         protected TDataLayer DataLayer { get; }
 
         protected ILogger Logger { get; private set; }
-        public RunInfo<TId> RunInfo { get; private set; }
+        public IRunInfo RunInfo { get; private set; }
         public StagePath StagePath { get; private set; }
 
         /// <summary>
@@ -35,13 +35,13 @@ namespace AutomationFramework
         /// WARNING: If this is set to run in parallel, the Work and CreateChildren functions of this stage and any child stages need to be thread safe.
         /// </summary>
         public virtual int MaxParallelChildren { get; set; } = 1;
-        public Func<object> GetMetaDataFunc { get; private set; }
+        private object MetaData { get; set; }
 
-        internal void SetProperties(RunInfo<TId> runInfo, StagePath path, Func<object> getMetaData, ILogger logger)
+        internal void SetProperties(IRunInfo runInfo, StagePath path, object metaData, ILogger logger)
         {
             RunInfo = runInfo;
             StagePath = path;
-            GetMetaDataFunc = getMetaData;
+            MetaData = metaData;
             Logger = logger;
             Logger?.Information(path, $"{Name}");
         }
@@ -50,7 +50,7 @@ namespace AutomationFramework
         {
             try
             {
-                return GetMetaDataFunc?.Invoke() as TMetaData;
+                return MetaData as TMetaData;
             }
             catch (Exception ex)
             {
@@ -60,11 +60,11 @@ namespace AutomationFramework
             }
         }
 
-        public void Run(RunInfo<TId> runInfo, StagePath path, Func<object> getMetaData, ILogger logger)
+        public void Run(IRunInfo runInfo, StagePath path, object metaData, ILogger logger)
         {
             try
             {
-                SetProperties(runInfo, path, getMetaData, logger);
+                SetProperties(runInfo, path, metaData, logger);
                 DataLayer.CreateStage(this);
                 if (IsEnabled) Run();
                 else SetStatusBase(StageStatuses.Disabled);
@@ -99,7 +99,7 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
-        public abstract IModule<TId>[] InvokeCreateChildren();
+        public abstract void InvokeConfigureChild(IModule child);
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 

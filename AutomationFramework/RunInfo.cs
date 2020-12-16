@@ -4,8 +4,11 @@ using System.Text;
 
 namespace AutomationFramework
 {
-    [Serializable]
-    public struct RunInfo<TId>
+    /// <summary>
+    /// Contains information needed to process and retrieve data during a run
+    /// </summary>
+    /// <typeparam name="TId">The ID type of the job and request. Should only be used to store immutable types.</typeparam>
+    public class RunInfo<TId> : IRunInfo
     {
         public RunInfo(RunType type, TId jobId, TId requestId, StagePath path)
         {
@@ -15,16 +18,10 @@ namespace AutomationFramework
             Path = path;
         }
 
-        public RunType Type;
-        public StagePath Path;
-        /// <summary>
-        /// Should only be used to store immutable types
-        /// </summary>
-        public TId JobId;
-        /// <summary>
-        /// Should only be used to store immutable types
-        /// </summary>
-        public TId RequestId;
+        public RunType Type { get; }
+        public StagePath Path { get; }
+        public TId JobId { get; }
+        public TId RequestId { get; }
 
         public static RunInfo<TId> Empty { get { return new RunInfo<TId>(RunType.Run, default, default, StagePath.Empty); } }
 
@@ -139,6 +136,11 @@ namespace AutomationFramework
         public override int GetHashCode()
         {
             return HashCode.Combine(JobId, RequestId, Path, Type.GetHashCode());
+        }
+
+        public IRunInfo Clone()
+        {
+            return new RunInfo<TId>(Type, JobId, RequestId, Path.Clone());
         }
 
         public static bool operator ==(RunInfo<TId> a, RunInfo<TId> b)

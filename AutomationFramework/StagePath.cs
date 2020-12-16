@@ -2,26 +2,23 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Collections;
 
 namespace AutomationFramework
 {
-    [Serializable]
-    public struct StagePath : IEquatable<StagePath>
+    public class StagePath : IEquatable<StagePath>
     {
-        private long _Indices;
+        public StagePath(params int[] indices)
+        {
+            _Indices = indices.ToArray();
+        }
+
+        private int[] _Indices;
 
         /// <summary>
         /// Represents the path
         /// </summary>
-        public long Indices
-        {
-            get { return _Indices; }
-            set
-            {
-                if (value < 0) throw new Exception("Value cannot be negative");
-                _Indices = value;
-            }
-        }
+        public int[] Indices { get { return _Indices ??= Array.Empty<int>(); } }
 
         /// <summary>
         /// Returns the last index of the Indices. If Indices is empty return 0.
@@ -30,52 +27,36 @@ namespace AutomationFramework
         {
             get
             {
-                var array = ToArray();
-                return array.Length == 0 ? 0 : array.Last();
+                if (Indices.Length == 0) return 0;
+                return Indices.Last();
             }
         }
 
-        public static StagePath Empty { get => new StagePath(); }
+        public static StagePath Empty { get { return new StagePath(); } }
 
-        public static StagePath Root { get => new StagePath { Indices = 1 }; }
+        public static StagePath Root { get { return new StagePath(1); } }
 
-        public int this[int index] { get => ToArray()[index]; }
-
-        public int[] ToArray()
+        public int this[int index]
         {
-            List<int> integers = new List<int>();
-            foreach (var c in Indices.ToString())
-                integers.Add(int.Parse(c.ToString()));
-            return integers.ToArray();
+            get
+            {
+                return Indices[index];
+            }
         }
 
         public static StagePath Parse(string s)
         {
             if (string.IsNullOrEmpty(s)) return Empty;
-            var split = SplitString(s);
             List<int> ints = new List<int>();
-            if (split != null)
-                foreach (var index in split)
-                    ints.Add(int.Parse(index));
-            else
-                foreach (var c in s)
-                    ints.Add(c);
-            return new StagePath { Indices = ToLong(ints) };
+            foreach (var index in SplitString(s))
+                ints.Add(int.Parse(index));
+            return new StagePath(ints.ToArray());
         }
 
-        private static long ToLong(IEnumerable<int> indices)
+        private static string[] SplitString(string s)
         {
-            string s = null;
-            foreach (var i in indices) s += i;
-            return long.Parse(s);
-        }
-
-        private static string[] SplitString(string path)
-        {
-            var chars = new char[] { ',', '-', '|', '_', '.' };
-            foreach (var c in chars)
-                if (path.Contains(c)) return path.Split(c);
-            return null;
+            var chars = new char[] { ',', '-', '.', '_', '|', ' ' };
+            return s.Split(chars);
         }
 
         public static bool TryParse(string s, out StagePath path)
@@ -92,13 +73,14 @@ namespace AutomationFramework
             }
         }
 
-        public int Length { get => Indices == 0 ? 0 : ToArray().Length; }
+        public int Length { get { return Indices.Length; } }
 
         public StagePath CreateChild(int index)
         {
-            var indices = ToArray().ToList();
+            List<int> indices = Indices.ToList();
             indices.Add(index);
-            return new StagePath { Indices = ToLong(indices) };
+
+            return new StagePath(indices.ToArray());
         }
 
         /// <summary>
@@ -157,19 +139,33 @@ namespace AutomationFramework
 
         public override string ToString()
         {
-            return Indices.ToString();
+            string path = "";
+            foreach (var id in Indices)
+                path += id + "-";
+            return path.TrimEnd('-');
         }
 
         public bool Equals(StagePath other)
         {
-            return Indices == other.Indices;
+            if (Length != other.Length) return false;
+            for (int i = 0; i < Length; i++)
+                if (this[i] != other[i]) return false;
+            return true;
         }
 
-        public override bool Equals(object obj) => obj is StagePath path && Equals(path);
+        public override bool Equals(object other)
+        {
+            return other is StagePath ? this.Equals((StagePath)other) : false;
+        }
 
         public override int GetHashCode()
         {
-            return Indices.GetHashCode();
+            return ((IStructuralEquatable)Indices).GetHashCode(EqualityComparer<int>.Default);
+        }
+
+        public StagePath Clone()
+        {
+            return new StagePath(Indices);
         }
 
         public static bool operator ==(StagePath a, StagePath b)

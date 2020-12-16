@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class KernelBase<TId, TDataLayer> : IKernel<TId> where TDataLayer : IKernelDataLayer<TId>
+    public abstract class KernelBase<TDataLayer> : IKernel where TDataLayer : IKernelDataLayer
     {
         public KernelBase(ILogger logger = null)
         {
@@ -16,7 +16,7 @@ namespace AutomationFramework
             DataLayer = Activator.CreateInstance<TDataLayer>();
         }
 
-        private readonly object CancellationLock = new object();
+        private readonly object metaDataLock = new object();
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
 
         protected ILogger Logger { get; }
@@ -24,7 +24,7 @@ namespace AutomationFramework
         public abstract string Name { get; }
         private bool HasRunBeenCalled { get; set; }
         private Func<object> GetMetaDataFunc { get; set; }
-        private ConcurrentDictionary<StagePath, IModule<TId>> Stages { get; } = new ConcurrentDictionary<StagePath, IModule<TId>>();
+        private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
 
         protected TDataLayer DataLayer { get; }
 
@@ -32,7 +32,8 @@ namespace AutomationFramework
         {
             try
             {
-                return GetMetaDataFunc?.Invoke() as TMetaData;
+                lock(metaDataLock)
+                    return GetMetaDataFunc?.Invoke() as TMetaData;
             }
             catch (Exception ex)
             {
@@ -42,17 +43,20 @@ namespace AutomationFramework
             }
         }
 
-        public void Run(RunInfo<TId> runInfo, Func<object> getMetaData = null)
+        public StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule
+        {
+            return new StageBuilder<TModule>();
+        }
+
+        public void Run(IRunInfo runInfo, Func<object> getMetaData = null)
         {
             try
             {
                 Logger?.Information($"{Name} Started");
                 GetMetaDataFunc = getMetaData;
-                Stages.TryAdd(StagePath.Root, CreateStages());
                 runInfo = Initialize(runInfo);
-                Stages.TryGetValue(StagePath.Root, out IModule<TId> rootStage);
-                RunStage(runInfo, StagePath.Root, rootStage);
-                RunChildren(runInfo, StagePath.Root, rootStage);
+                BuildStages();
+                RunStage(runInfo.Clone(), StagePath.Root, GetStage(StagePath.Root));
                 Logger?.Information($"{Name} Finished");
             }
             catch (OperationCanceledException)
@@ -65,6 +69,12 @@ namespace AutomationFramework
             }
         }
 
+        private void BuildStages()
+        {
+            var builder = Configure();
+            Stages = builder.Build(StagePath.Root);
+        }
+
         public void Cancel()
         {
             Cancel(StagePath.Root);
@@ -72,27 +82,25 @@ namespace AutomationFramework
 
         public void Cancel(StagePath path)
         {
-            lock (CancellationLock)
+            CancellationSource.Cancel();
+            foreach(var pathToCancel in GetPathAndDescendantsOf(path))
             {
-                CancellationSource.Cancel();
-                foreach(var pathToCancel in GetPathAndDescendantsOf(path))
-                {
-                    Stages.TryGetValue(pathToCancel, out IModule<TId> stage);
-                    stage.Cancel();
-                }
+                Stages.TryGetValue(pathToCancel, out IModule stage);
+                stage.Cancel();
             }
         }
 
         private StagePath[] GetPathAndDescendantsOf(StagePath path)
         {
-            return Stages.Keys.Where(x => x == path || x.IsDescendantOf(path)).ToArray();
+            return Stages.Where(x => x.Key == path || x.Key.IsDescendantOf(path)).Select(x => x.Key).ToArray();
         }
 
-        private void RunStage(RunInfo<TId> runInfo, StagePath path, IModule<TId> stage)
+        private void RunStage(IRunInfo runInfo, StagePath path, IModule stage)
         {
             try
             {
-                stage.Run(runInfo, path, GetMetaDataFunc, Logger);
+                stage.Run(runInfo, path, GetMetaData<object>(), Logger);
+                RunChildren(runInfo, path, stage);
             }
             catch (OperationCanceledException)
             {
@@ -104,13 +112,19 @@ namespace AutomationFramework
             }
         }
 
-        private Task RunStageInParallel(RunInfo<TId> runInfo, StagePath path, IModule<TId> stage)
+        private Task RunStageInParallel(IRunInfo runInfo, StagePath path, object metaData, IModule stage)
         {
-            return Task.Factory.StartNew(() => stage.Run(runInfo, path, GetMetaDataFunc, Logger), stage.GetCancellationToken())
+            return Task.Factory.StartNew(() =>
+                {
+                    stage.Run(runInfo, path, metaData, Logger);
+                }, stage.GetCancellationToken())
                 .ContinueWith((t) =>
                 {
                     switch (t.Status)
                     {
+                        case TaskStatus.RanToCompletion:
+                            RunChildren(runInfo, path, stage);
+                            break;
                         case TaskStatus.Canceled:
                             Logger?.Warning(path, $"Stage {stage} was cancelled");
                             break;
@@ -124,46 +138,32 @@ namespace AutomationFramework
                 });
         }
 
-        private StagePath[] CreateChildren(StagePath path, IModule<TId> stage)
+        private IModule GetStage(StagePath path)
         {
-            int childindex = 0;
-            List<StagePath> childPaths = new List<StagePath>();
-
-            lock (CancellationLock)
-            {
-                if (CancellationSource.Token.IsCancellationRequested)
-                    CancellationSource.Token.ThrowIfCancellationRequested();
-                foreach (var child in stage.InvokeCreateChildren())
-                {
-                    var childPath = path.CreateChild(++childindex);
-                    Stages.TryAdd(childPath, child);
-                    childPaths.Add(childPath);
-                }
-            }
-
-            return childPaths.ToArray();
+            Stages.TryGetValue(path, out IModule stage);
+            return stage;
         }
 
-        private void RunChildren(RunInfo<TId> runInfo, StagePath path, IModule<TId> stage)
+        private StagePath[] GetChildPaths(StagePath path)
+        {
+            return Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).ToArray();
+        }
+
+        private void RunChildren(IRunInfo runInfo, StagePath path, IModule stage)
         {
             List<Task> tasks = new List<Task>();
-            foreach (var childPath in CreateChildren(path, stage))
+            foreach (var childPath in GetChildPaths(path))
             {
-                Stages.TryGetValue(childPath, out IModule<TId> child);
+                var child = GetStage(childPath);
+                stage.InvokeConfigureChild(child);
+
                 if (stage.MaxParallelChildren == 1)
                 {
                     RunStage(runInfo, childPath, child);
-                    // Recursively runs the children of the stage that just ran
-                    RunChildren(runInfo, childPath, child);
                 }
                 else
                 {
-                    tasks.Add(RunStageInParallel(runInfo, childPath, child).ContinueWith(t =>
-                    {
-                        // Recursively runs the children of the stage that just ran
-                        if (t.Status == TaskStatus.RanToCompletion)
-                            RunChildren(runInfo, childPath, child);
-                    }));
+                    tasks.Add(RunStageInParallel(runInfo.Clone(), childPath.Clone(), GetMetaData<object>(), child));
                     if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
                         tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
                 }
@@ -177,7 +177,7 @@ namespace AutomationFramework
         /// </summary>
         /// <param name="runInfo"></param>
         /// <returns>The updated run info</returns>
-        private RunInfo<TId> Initialize(RunInfo<TId> runInfo)
+        private IRunInfo Initialize(IRunInfo runInfo)
         {
             try
             {
@@ -185,9 +185,9 @@ namespace AutomationFramework
                 HasRunBeenCalled = true;
 
                 ValidateRunInfo(runInfo);
-                runInfo.JobId = GetJobId(runInfo);
-                if (DataLayer.GetIsEmptyId(runInfo.JobId)) throw new Exception("No job Id exists");
-                runInfo.RequestId = DataLayer.CreateRequest(runInfo, GetMetaDataFunc?.Invoke());
+                runInfo = DataLayer.GetJobId(this, runInfo);
+                //if (DataLayer.GetIsEmptyId()) throw new Exception("No job Id exists");
+                runInfo = DataLayer.CreateRequest(runInfo, GetMetaDataFunc?.Invoke());
                 return runInfo;
             }
             catch (Exception ex)
@@ -200,28 +200,15 @@ namespace AutomationFramework
         /// <summary>
         /// Creates the stages - Called at the start of the run method
         /// </summary>
-        /// <returns>The root stage module</returns>
-        protected abstract IModule<TId> CreateStages();
-
-        private TId GetJobId(RunInfo<TId> runInfo)
-        {
-            if (DataLayer.GetIsEmptyId(runInfo.JobId))
-            {
-                return DataLayer.CreateJob(this);
-            }
-            else
-            {
-                DataLayer.CheckExistingJob(runInfo.JobId, Version);
-                return runInfo.JobId;
-            }
-        }
+        /// <returns>The root stage builder</returns>
+        protected abstract IStageBuilder Configure();
 
         /// <summary>
         /// Performs validation on the RunInfo
         /// if validation fails a RunInfoValidationException is thrown.
         /// This method should only be called from the job thread.
         /// </summary>
-        protected virtual void ValidateRunInfo(RunInfo<TId> runInfo)
+        protected virtual void ValidateRunInfo(IRunInfo runInfo)
         {
             if (!runInfo.GetIsValid(out string exMsg))
                 throw new Exception(exMsg);

@@ -47,7 +47,7 @@ namespace AutomationFramework.UnitTests
             Log.Warning(GetText(path, message));
         }
 
-        private string GetText(StagePath path, string message)
+        private static string GetText(StagePath path, string message)
         {
             if (path == StagePath.Empty)
                 return message;
