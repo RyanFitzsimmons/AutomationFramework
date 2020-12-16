@@ -146,7 +146,7 @@ namespace AutomationFramework
 
         private StagePath[] GetChildPaths(StagePath path)
         {
-            return Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).ToArray();
+            return Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).OrderBy(x => x).ToArray();
         }
 
         private void RunChildren(IRunInfo runInfo, StagePath path, IModule stage)

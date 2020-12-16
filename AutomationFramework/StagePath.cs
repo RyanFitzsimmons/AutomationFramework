@@ -6,10 +6,11 @@ using System.Collections;
 
 namespace AutomationFramework
 {
-    public class StagePath : IEquatable<StagePath>
+    public class StagePath : IEquatable<StagePath>, IComparable
     {
         public StagePath(params int[] indices)
         {
+            ValidateIndices(indices);
             _Indices = indices.ToArray();
         }
 
@@ -75,8 +76,19 @@ namespace AutomationFramework
 
         public int Length { get { return Indices.Length; } }
 
+        private void ValidateIndices(IEnumerable<int> indices)
+        {
+            foreach (var index in indices) ValidateIndex(index);
+        }
+
+        private void ValidateIndex(int index)
+        {
+            if (index < 1) throw new Exception("A stage path index cannot be less than one");
+        }
+
         public StagePath CreateChild(int index)
         {
+            ValidateIndex(index);
             List<int> indices = Indices.ToList();
             indices.Add(index);
 
@@ -147,15 +159,12 @@ namespace AutomationFramework
 
         public bool Equals(StagePath other)
         {
-            if (Length != other.Length) return false;
-            for (int i = 0; i < Length; i++)
-                if (this[i] != other[i]) return false;
-            return true;
+            return other != null && this.ToString() == other.ToString();
         }
 
         public override bool Equals(object other)
         {
-            return other is StagePath ? this.Equals((StagePath)other) : false;
+            return other is StagePath && this.Equals((StagePath)other);
         }
 
         public override int GetHashCode()
@@ -168,24 +177,38 @@ namespace AutomationFramework
             return new StagePath(Indices);
         }
 
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+
+            StagePath otherStagePath = obj as StagePath;
+            if (otherStagePath != null)
+                return this.ToString().CompareTo(otherStagePath.ToString());
+            else
+                throw new ArgumentException("Object is not a StagePath");
+        }
+
         public static bool operator ==(StagePath a, StagePath b)
         {
+            if (a is null)
+                return b is null;
+
             return a.Equals(b);
         }
 
         public static bool operator !=(StagePath a, StagePath b)
         {
-            return !a.Equals(b);
+            return !(a == b);
         }
 
         public static bool operator <(StagePath a, StagePath b)
         {
-            return a.IsAncestorOf(b);
+            return a.CompareTo(b) < 0;
         }
 
         public static bool operator >(StagePath a, StagePath b)
         {
-            return a.IsDescendantOf(b);
+            return a.CompareTo(b) > 0;
         }
     }
 }

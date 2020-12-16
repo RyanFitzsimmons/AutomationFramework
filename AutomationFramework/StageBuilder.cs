@@ -9,13 +9,12 @@ namespace AutomationFramework
 {
     public class StageBuilder<TModule> : IStageBuilder where TModule : IModule
     {
-        private TModule Module { get; set; }
+        private TModule Module { get; set; } = Activator.CreateInstance<TModule>();
 
         private List<IStageBuilder> Builders { get; set; } = new List<IStageBuilder>();
 
         public StageBuilder<TModule> Configure(Action<TModule> configureDelegate)
         {
-            Module = Activator.CreateInstance<TModule>();
             configureDelegate.Invoke(Module);
             return this;
         }
