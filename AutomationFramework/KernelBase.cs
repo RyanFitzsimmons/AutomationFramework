@@ -13,7 +13,7 @@ namespace AutomationFramework
         public KernelBase(ILogger logger = null)
         {
             Logger = logger;
-            DataLayer = CreateDataLayer();
+            DataLayer = Activator.CreateInstance<TDataLayer>();
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
@@ -24,11 +24,24 @@ namespace AutomationFramework
         private bool HasRunBeenCalled { get; set; }
         private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
 
-        protected TDataLayer DataLayer { get; }
+        private TDataLayer DataLayer { get; }
 
-        protected abstract TDataLayer CreateDataLayer();
+        /// <summary>
+        /// Stores the meta data for GetMetaData method
+        /// </summary>
+        private IMetaData MetaData { get; set; }
 
-        public StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule
+        /// <summary>
+        /// This method should only be used when configuring the stage builder
+        /// </summary>
+        /// <typeparam name="TMetaData"></typeparam>
+        /// <returns>Meta data</returns>
+        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
+        {
+            return MetaData as TMetaData;
+        }
+
+        protected StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule
         {
             return new StageBuilder<TModule>();
         }

@@ -12,7 +12,7 @@ namespace AutomationFramework
         /// <summary>
         /// Takes the stage module and an IEnumerable of child stage modules
         /// </summary>
-        public Action<IModule, IModule> ConfigureChild { get; set; }
+        public Action<IModule, IModule, IMetaData> ConfigureChild { get; set; }
         public Action<IModule, IRunInfo, StagePath> Work { get; set; }
 
         internal protected override void Run()
@@ -47,7 +47,7 @@ namespace AutomationFramework
 
         public override void InvokeConfigureChild(IModule child)
         {
-            ConfigureChild?.Invoke(this, child);
+            ConfigureChild?.Invoke(this, child, MetaData);
             if (!IsEnabled) child.IsEnabled = false;
         }
     }

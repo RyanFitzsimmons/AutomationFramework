@@ -35,7 +35,7 @@ namespace AutomationFramework
         /// WARNING: If this is set to run in parallel, the Work and CreateChildren functions of this stage and any child stages need to be thread safe.
         /// </summary>
         public virtual int MaxParallelChildren { get; set; } = 1;
-        private IMetaData MetaData { get; set; }
+        protected internal IMetaData MetaData { get; set; }
 
         internal void SetProperties(IRunInfo runInfo, StagePath path, ILogger logger)
         {
@@ -46,18 +46,9 @@ namespace AutomationFramework
             Logger?.Information(path, $"{Name}");
         }
 
-        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class
+        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
         {
-            try
-            {
-                return MetaData as TMetaData;
-            }
-            catch (Exception ex)
-            {
-                var message = "Failed to retrieve meta data";
-                Logger?.Error(StagePath.Empty, message);
-                throw new Exception(message, ex);
-            }
+            return MetaData as TMetaData;
         }
 
         public void Run(IRunInfo runInfo, StagePath path, ILogger logger)
@@ -86,7 +77,7 @@ namespace AutomationFramework
 
         internal protected void SetStatusBase(StageStatuses status)
         {
-            Logger.Information(StagePath, status.ToString());
+            Logger?.Information(StagePath, status.ToString());
             DataLayer.SetStatus(this, status);
         }
 

@@ -10,7 +10,7 @@ namespace AutomationFramework
         /// <summary>
         /// Takes the stage module, stage module result and an IEnumerable of child stage modules
         /// </summary>
-        public Action<IModule, TResult, IModule> ConfigureChildWithResult { get; set; }
+        public Action<IModule, TResult, IModule, IMetaData> ConfigureChildWithResult { get; set; }
 
         public Func<IModule, IRunInfo, StagePath, TResult> Work { get; set; }
 
@@ -44,8 +44,8 @@ namespace AutomationFramework
         {
             CheckForCancellation();
             var result = GetResult();
-            if (result == default(TResult)) Logger.Warning($"{this} no result found");
-            else ConfigureChildWithResult?.Invoke(this, result, child); 
+            if (result == default(TResult)) Logger?.Warning($"{this} no result found");
+            else ConfigureChildWithResult?.Invoke(this, result, child, MetaData); 
 
             if (!IsEnabled) child.IsEnabled = false;
         }

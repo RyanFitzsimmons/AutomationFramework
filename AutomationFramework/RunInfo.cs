@@ -155,7 +155,7 @@ namespace AutomationFramework
 
         public override string ToString()
         {
-            return $"{Type}-{JobId}-{RequestId}-{Path}";
+            return $"[{Type}]-[{JobId}]-[{RequestId}]-[{Path}]";
         }
     }
 }
