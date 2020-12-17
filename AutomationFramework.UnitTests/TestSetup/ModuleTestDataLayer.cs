@@ -21,6 +21,13 @@ namespace AutomationFramework.UnitTests.TestSetup
             return Activator.CreateInstance<TResult>();
         }
 
+        public IMetaData GetMetaData(IModule module)
+        {
+            string action = "Get Meta Data";
+            (module as TestModuleWithResult).Actions.Add(action);
+            return new TestMetaData();
+        }
+
         public TResult GetPreviousResult<TResult>(IModule module) where TResult : class
         {
             string action = "Get Existing Result";

@@ -35,13 +35,13 @@ namespace AutomationFramework
         /// WARNING: If this is set to run in parallel, the Work and CreateChildren functions of this stage and any child stages need to be thread safe.
         /// </summary>
         public virtual int MaxParallelChildren { get; set; } = 1;
-        private object MetaData { get; set; }
+        private IMetaData MetaData { get; set; }
 
-        internal void SetProperties(IRunInfo runInfo, StagePath path, object metaData, ILogger logger)
+        internal void SetProperties(IRunInfo runInfo, StagePath path, ILogger logger)
         {
             RunInfo = runInfo;
             StagePath = path;
-            MetaData = metaData;
+            MetaData = DataLayer.GetMetaData(this);
             Logger = logger;
             Logger?.Information(path, $"{Name}");
         }
@@ -60,11 +60,11 @@ namespace AutomationFramework
             }
         }
 
-        public void Run(IRunInfo runInfo, StagePath path, object metaData, ILogger logger)
+        public void Run(IRunInfo runInfo, StagePath path, ILogger logger)
         {
             try
             {
-                SetProperties(runInfo, path, metaData, logger);
+                SetProperties(runInfo, path, logger);
                 DataLayer.CreateStage(this);
                 if (IsEnabled) Run();
                 else SetStatusBase(StageStatuses.Disabled);

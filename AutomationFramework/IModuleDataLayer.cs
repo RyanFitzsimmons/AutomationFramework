@@ -14,5 +14,7 @@ namespace AutomationFramework
         void SaveResult<TResult>(IModule module, TResult result) where TResult : class;
         TResult GetCurrentResult<TResult>(IModule module) where TResult : class;
         TResult GetPreviousResult<TResult>(IModule module) where TResult : class;
+
+        IMetaData GetMetaData(IModule module);
     }
 }

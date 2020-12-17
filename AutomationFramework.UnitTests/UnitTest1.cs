@@ -21,7 +21,7 @@ namespace AutomationFramework.UnitTests
         public void Test1()
         {
             var job = new TestKernel(1, new TestLogger());
-            job.Run(RunInfo<string>.Empty);
+            job.Run(RunInfo<string>.Empty, new TestMetaData());
             Test1Results(job);
         }
 
@@ -29,7 +29,7 @@ namespace AutomationFramework.UnitTests
         public void Test1Parallel()
         {
             var job = new TestKernel(3, new TestLogger());
-            job.Run(RunInfo<string>.Empty);
+            job.Run(RunInfo<string>.Empty, new TestMetaData());
             Test1Results(job);
         }
 
@@ -56,23 +56,26 @@ namespace AutomationFramework.UnitTests
                             switch (j)
                             {
                                 case 0:
-                                    Assert.Equal("Create Stage", action);
+                                    Assert.Equal("Get Meta Data", action);
                                     break;
                                 case 1:
-                                    Assert.Equal("Set Status Running", action);
+                                    Assert.Equal("Create Stage", action);
                                     break;
                                 case 2:
-                                    Assert.Equal("Doing Work", action);
+                                    Assert.Equal("Set Status Running", action);
                                     break;
                                 case 3:
-                                    Assert.Equal("Save Result", action);
+                                    Assert.Equal("Doing Work", action);
                                     break;
                                 case 4:
-                                    Assert.Equal("Set Status Completed", action);
+                                    Assert.Equal("Save Result", action);
                                     break;
                                 case 5:
+                                    Assert.Equal("Set Status Completed", action);
+                                    break;
                                 case 6:
                                 case 7:
+                                case 8:
                                     if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
@@ -91,14 +94,17 @@ namespace AutomationFramework.UnitTests
                             switch (j)
                             {
                                 case 0:
-                                    Assert.Equal("Create Stage", action);
+                                    Assert.Equal("Get Meta Data", action);
                                     break;
                                 case 1:
-                                    Assert.Equal("Set Status Disabled", action);
+                                    Assert.Equal("Create Stage", action);
                                     break;
                                 case 2:
+                                    Assert.Equal("Set Status Disabled", action);
+                                    break;
                                 case 3:
                                 case 4:
+                                case 5:
                                     if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;

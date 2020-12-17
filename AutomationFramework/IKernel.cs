@@ -8,6 +8,6 @@ namespace AutomationFramework
     {
         string Version { get; }
         string Name { get; }
-        void Run(IRunInfo runInfo, Func<object> getMetaData = null);
+        void Run(IRunInfo runInfo, IMetaData metaData);
     }
 }

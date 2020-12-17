@@ -16,7 +16,7 @@ namespace AutomationFramework
         StagePath StagePath { get; }
 
         CancellationToken GetCancellationToken();
-        void Run(IRunInfo runInfo, StagePath path, object metaData, ILogger logger);
+        void Run(IRunInfo runInfo, StagePath path, ILogger logger);
         void Cancel();
         void InvokeConfigureChild(IModule child);
     }

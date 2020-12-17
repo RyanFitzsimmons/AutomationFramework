@@ -18,8 +18,9 @@ namespace AutomationFramework.UnitTests.TestSetup
             return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path.Clone());
         }
 
-        public IRunInfo CreateRequest(IRunInfo runInfo, object metaData)
+        public IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData)
         {
+            var md = metaData as TestMetaData;
             return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path.Clone());
         }
 
@@ -34,6 +35,11 @@ namespace AutomationFramework.UnitTests.TestSetup
                 CheckExistingJob(runInfo, kernel.Version);
                 return runInfo;
             }
+        }
+
+        public IMetaData GetMetaData(IRunInfo runInfo) 
+        {
+            return new TestMetaData();
         }
     }
 }

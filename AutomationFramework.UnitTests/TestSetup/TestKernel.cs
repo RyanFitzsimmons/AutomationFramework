@@ -19,6 +19,11 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         public List<IModule> TestModules { get; private set; } = new List<IModule>();
 
+        protected override KernelTestDataLayer CreateDataLayer()
+        {
+            return new KernelTestDataLayer();
+        }
+
         protected override IStageBuilder Configure()
         {
             var builder = GetStageBuilder<TestModuleWithResult>();

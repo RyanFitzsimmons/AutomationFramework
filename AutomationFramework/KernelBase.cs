@@ -13,50 +13,34 @@ namespace AutomationFramework
         public KernelBase(ILogger logger = null)
         {
             Logger = logger;
-            DataLayer = Activator.CreateInstance<TDataLayer>();
+            DataLayer = CreateDataLayer();
         }
 
-        private readonly object metaDataLock = new object();
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
 
         protected ILogger Logger { get; }
         public abstract string Version { get; }
         public abstract string Name { get; }
         private bool HasRunBeenCalled { get; set; }
-        private Func<object> GetMetaDataFunc { get; set; }
         private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
 
         protected TDataLayer DataLayer { get; }
 
-        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class 
-        {
-            try
-            {
-                lock(metaDataLock)
-                    return GetMetaDataFunc?.Invoke() as TMetaData;
-            }
-            catch (Exception ex)
-            {
-                var message = "Failed to retrieve meta data";
-                Logger?.Error(message);
-                throw new Exception(message, ex);
-            }
-        }
+        protected abstract TDataLayer CreateDataLayer();
 
         public StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule
         {
             return new StageBuilder<TModule>();
         }
 
-        public void Run(IRunInfo runInfo, Func<object> getMetaData = null)
+        public void Run(IRunInfo runInfo, IMetaData metaData)
         {
             try
             {
                 Logger?.Information($"{Name} Started");
-                GetMetaDataFunc = getMetaData;
-                runInfo = Initialize(runInfo);
+                runInfo = Initialize(runInfo, metaData);
                 BuildStages();
-                RunStage(runInfo.Clone(), StagePath.Root, GetStage(StagePath.Root));
+                RunStage(runInfo, StagePath.Root, GetStage(StagePath.Root));
                 Logger?.Information($"{Name} Finished");
             }
             catch (OperationCanceledException)
@@ -99,7 +83,7 @@ namespace AutomationFramework
         {
             try
             {
-                stage.Run(runInfo, path, GetMetaData<object>(), Logger);
+                stage.Run(runInfo, path, Logger);
                 RunChildren(runInfo, path, stage);
             }
             catch (OperationCanceledException)
@@ -112,11 +96,11 @@ namespace AutomationFramework
             }
         }
 
-        private Task RunStageInParallel(IRunInfo runInfo, StagePath path, object metaData, IModule stage)
+        private Task RunStageInParallel(IRunInfo runInfo, StagePath path, IModule stage)
         {
             return Task.Factory.StartNew(() =>
                 {
-                    stage.Run(runInfo, path, metaData, Logger);
+                    stage.Run(runInfo, path, Logger);
                 }, stage.GetCancellationToken())
                 .ContinueWith((t) =>
                 {
@@ -163,7 +147,7 @@ namespace AutomationFramework
                 }
                 else
                 {
-                    tasks.Add(RunStageInParallel(runInfo.Clone(), childPath.Clone(), GetMetaData<object>(), child));
+                    tasks.Add(RunStageInParallel(runInfo.Clone(), childPath.Clone(), child));
                     if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
                         tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
                 }
@@ -177,7 +161,7 @@ namespace AutomationFramework
         /// </summary>
         /// <param name="runInfo"></param>
         /// <returns>The updated run info</returns>
-        private IRunInfo Initialize(IRunInfo runInfo)
+        private IRunInfo Initialize(IRunInfo runInfo, IMetaData metaData)
         {
             try
             {
@@ -186,8 +170,7 @@ namespace AutomationFramework
 
                 ValidateRunInfo(runInfo);
                 runInfo = DataLayer.GetJobId(this, runInfo);
-                //if (DataLayer.GetIsEmptyId()) throw new Exception("No job Id exists");
-                runInfo = DataLayer.CreateRequest(runInfo, GetMetaDataFunc?.Invoke());
+                runInfo = DataLayer.CreateRequest(runInfo, metaData);
                 return runInfo;
             }
             catch (Exception ex)
