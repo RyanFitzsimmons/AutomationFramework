@@ -37,11 +37,11 @@ namespace AutomationFramework
         public virtual int MaxParallelChildren { get; set; } = 1;
         protected internal IMetaData MetaData { get; set; }
 
-        internal void SetProperties(IRunInfo runInfo, StagePath path, ILogger logger)
+        internal void SetProperties(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
         {
             RunInfo = runInfo;
             StagePath = path;
-            MetaData = DataLayer.GetMetaData(this);
+            MetaData = metaData;
             Logger = logger;
             Logger?.Information(path, $"{Name}");
         }
@@ -51,11 +51,11 @@ namespace AutomationFramework
             return MetaData as TMetaData;
         }
 
-        public void Run(IRunInfo runInfo, StagePath path, ILogger logger)
+        public void Run(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
         {
             try
             {
-                SetProperties(runInfo, path, logger);
+                SetProperties(runInfo, path, metaData, logger);
                 DataLayer.CreateStage(this);
                 if (IsEnabled) Run();
                 else SetStatusBase(StageStatuses.Disabled);

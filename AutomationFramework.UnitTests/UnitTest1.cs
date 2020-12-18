@@ -56,26 +56,23 @@ namespace AutomationFramework.UnitTests
                             switch (j)
                             {
                                 case 0:
-                                    Assert.Equal("Get Meta Data", action);
-                                    break;
-                                case 1:
                                     Assert.Equal("Create Stage", action);
                                     break;
-                                case 2:
+                                case 1:
                                     Assert.Equal("Set Status Running", action);
                                     break;
-                                case 3:
+                                case 2:
                                     Assert.Equal("Doing Work", action);
                                     break;
-                                case 4:
+                                case 3:
                                     Assert.Equal("Save Result", action);
                                     break;
-                                case 5:
+                                case 4:
                                     Assert.Equal("Set Status Completed", action);
                                     break;
+                                case 5:
                                 case 6:
                                 case 7:
-                                case 8:
                                     if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
@@ -94,17 +91,14 @@ namespace AutomationFramework.UnitTests
                             switch (j)
                             {
                                 case 0:
-                                    Assert.Equal("Get Meta Data", action);
-                                    break;
-                                case 1:
                                     Assert.Equal("Create Stage", action);
                                     break;
-                                case 2:
+                                case 1:
                                     Assert.Equal("Set Status Disabled", action);
                                     break;
+                                case 2:
                                 case 3:
                                 case 4:
-                                case 5:
                                     if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;

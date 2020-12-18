@@ -53,7 +53,7 @@ namespace AutomationFramework
                 Logger?.Information($"{Name} Started");
                 runInfo = Initialize(runInfo, metaData);
                 BuildStages();
-                RunStage(runInfo, StagePath.Root, GetStage(StagePath.Root));
+                RunStage(runInfo, StagePath.Root, metaData, GetStage(StagePath.Root));
                 Logger?.Information($"{Name} Finished");
             }
             catch (OperationCanceledException)
@@ -92,12 +92,12 @@ namespace AutomationFramework
             return Stages.Where(x => x.Key == path || x.Key.IsDescendantOf(path)).Select(x => x.Key).ToArray();
         }
 
-        private void RunStage(IRunInfo runInfo, StagePath path, IModule stage)
+        private void RunStage(IRunInfo runInfo, StagePath path, IMetaData metaData, IModule stage)
         {
             try
             {
-                stage.Run(runInfo, path, Logger);
-                RunChildren(runInfo, path, stage);
+                stage.Run(runInfo, path, metaData, Logger);
+                RunChildren(runInfo, path, metaData, stage);
             }
             catch (OperationCanceledException)
             {
@@ -109,18 +109,18 @@ namespace AutomationFramework
             }
         }
 
-        private Task RunStageInParallel(IRunInfo runInfo, StagePath path, IModule stage)
+        private Task RunStageInParallel(IRunInfo runInfo, StagePath path, IMetaData metaData, IModule stage)
         {
             return Task.Factory.StartNew(() =>
                 {
-                    stage.Run(runInfo, path, Logger);
+                    stage.Run(runInfo, path, metaData, Logger);
                 }, stage.GetCancellationToken())
                 .ContinueWith((t) =>
                 {
                     switch (t.Status)
                     {
                         case TaskStatus.RanToCompletion:
-                            RunChildren(runInfo, path, stage);
+                            RunChildren(runInfo, path, metaData, stage);
                             break;
                         case TaskStatus.Canceled:
                             Logger?.Warning(path, $"Stage {stage} was cancelled");
@@ -146,7 +146,7 @@ namespace AutomationFramework
             return Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).OrderBy(x => x).ToArray();
         }
 
-        private void RunChildren(IRunInfo runInfo, StagePath path, IModule stage)
+        private void RunChildren(IRunInfo runInfo, StagePath path, IMetaData metaData, IModule stage)
         {
             List<Task> tasks = new List<Task>();
             foreach (var childPath in GetChildPaths(path))
@@ -156,11 +156,11 @@ namespace AutomationFramework
 
                 if (stage.MaxParallelChildren == 1)
                 {
-                    RunStage(runInfo, childPath, child);
+                    RunStage(runInfo, childPath, metaData, child);
                 }
                 else
                 {
-                    tasks.Add(RunStageInParallel(runInfo.Clone(), childPath.Clone(), child));
+                    tasks.Add(RunStageInParallel(runInfo.Clone(), childPath.Clone(), DataLayer.GetMetaData(runInfo), child));
                     if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
                         tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
                 }
