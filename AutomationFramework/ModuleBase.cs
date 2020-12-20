@@ -77,7 +77,7 @@ namespace AutomationFramework
         {
             try
             {
-                if (IsEnabled) Run();
+                if (IsEnabled) RunWork();
                 else SetStatusBase(StageStatuses.Disabled);
             }
             catch (OperationCanceledException)
