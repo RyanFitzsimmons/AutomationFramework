@@ -37,6 +37,11 @@ namespace AutomationFramework
         public virtual int MaxParallelChildren { get; set; } = 1;
         protected internal IMetaData MetaData { get; set; }
 
+        public virtual Action<IModule, IMetaData> OnInitialize { get; set; }
+        public virtual Action<IModule, IMetaData> OnCompletion { get; set; }
+        public virtual Action<IModule, IMetaData> PreCancellation { get; set; }
+        public virtual Action<IModule, IMetaData> OnCancellation { get; set; }
+
         internal void SetProperties(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
         {
             RunInfo = runInfo;
@@ -51,33 +56,55 @@ namespace AutomationFramework
             return MetaData as TMetaData;
         }
 
-        public void Run(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
+        public void Initialize(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
         {
             try
             {
                 SetProperties(runInfo, path, metaData, logger);
                 DataLayer.CreateStage(this);
+                OnInitialize?.Invoke(this, metaData);
+            }
+            catch 
+            {
+                /// We log here to capture which stage faulted
+                /// The exception is then thrown and logged within the kernel
+                Logger?.Error(path, "Failed to initialize");
+                throw;
+            }
+        }
+
+        public void Run()
+        {
+            try
+            {
                 if (IsEnabled) Run();
                 else SetStatusBase(StageStatuses.Disabled);
             }
             catch (OperationCanceledException)
             {
+                /// We catch here to set the status of the stage
+                /// The exception is logged within the kernel
                 SetStatusBase(StageStatuses.Cancelled);
                 throw;
             }
-            catch (Exception ex)
+            catch
             {
+                /// We catch here to set the status of the stage
+                /// The exception is logged within the kernel
                 SetStatusBase(StageStatuses.Errored);
-                Logger?.Error(StagePath, ex.ToString());
                 throw;
+            }
+            finally
+            {
+                OnCompletion?.Invoke(this, MetaData);
             }
         }
 
-        internal protected abstract void Run();
+        internal protected abstract void RunWork();
 
         internal protected void SetStatusBase(StageStatuses status)
         {
-            Logger?.Information(StagePath, status.ToString());
+            Logger?.Information(StagePath, status);
             DataLayer.SetStatus(this, status);
         }
 
@@ -96,7 +123,7 @@ namespace AutomationFramework
 
         public void Cancel()
         {
-            PreCancellation();
+            PreCancellation?.Invoke(this, MetaData);
             CancellationSource.Cancel();
         }
 
@@ -105,19 +132,9 @@ namespace AutomationFramework
             var token = GetCancellationToken();
             if (token.IsCancellationRequested)
             {
-                OnCancellation();
+                OnCancellation?.Invoke(this, MetaData);
                 token.ThrowIfCancellationRequested();
             }
-        }
-
-        protected virtual void OnCancellation()
-        {
-
-        }
-
-        protected virtual void PreCancellation()
-        {
-
         }
 
         public override string ToString()

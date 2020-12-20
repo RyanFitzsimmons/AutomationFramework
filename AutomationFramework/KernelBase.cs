@@ -53,17 +53,26 @@ namespace AutomationFramework
                 Logger?.Information($"{Name} Started");
                 runInfo = Initialize(runInfo, metaData);
                 BuildStages();
-                RunStage(runInfo, StagePath.Root, metaData, GetStage(StagePath.Root));
+                InitializeStages(runInfo);
+                if (runInfo.Type != RunType.BuildOnly)
+                    RunStage(StagePath.Root, GetStage(StagePath.Root));
                 Logger?.Information($"{Name} Finished");
             }
             catch (OperationCanceledException)
             {
                 Logger?.Warning($"{Name} Canceled");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Logger?.Error($"{Name} threw an exception");
+                Logger?.Fatal($"{Name} threw an exception");
+                Logger?.Fatal(ex);
             }
+        }
+
+        private void InitializeStages(IRunInfo runInfo)
+        {
+            foreach (var stage in Stages)
+                stage.Value.Initialize(runInfo.Clone(), stage.Key.Clone(), DataLayer.GetMetaData(runInfo), Logger);
         }
 
         private void BuildStages()
@@ -71,6 +80,8 @@ namespace AutomationFramework
             var builder = Configure();
             Stages = builder.Build(StagePath.Root);
         }
+
+        public CancellationToken GetCancellationToken() => CancellationSource.Token;
 
         public void Cancel()
         {
@@ -92,12 +103,12 @@ namespace AutomationFramework
             return Stages.Where(x => x.Key == path || x.Key.IsDescendantOf(path)).Select(x => x.Key).ToArray();
         }
 
-        private void RunStage(IRunInfo runInfo, StagePath path, IMetaData metaData, IModule stage)
+        private void RunStage(StagePath path, IModule stage)
         {
             try
             {
-                stage.Run(runInfo, path, metaData, Logger);
-                RunChildren(runInfo, path, metaData, stage);
+                stage.Run();
+                RunChildren(path, stage);
             }
             catch (OperationCanceledException)
             {
@@ -109,18 +120,18 @@ namespace AutomationFramework
             }
         }
 
-        private Task RunStageInParallel(IRunInfo runInfo, StagePath path, IMetaData metaData, IModule stage)
+        private Task RunStageInParallel(StagePath path, IModule stage)
         {
             return Task.Factory.StartNew(() =>
                 {
-                    stage.Run(runInfo, path, metaData, Logger);
+                    stage.Run();
                 }, stage.GetCancellationToken())
                 .ContinueWith((t) =>
                 {
                     switch (t.Status)
                     {
                         case TaskStatus.RanToCompletion:
-                            RunChildren(runInfo, path, metaData, stage);
+                            RunChildren(path, stage);
                             break;
                         case TaskStatus.Canceled:
                             Logger?.Warning(path, $"Stage {stage} was cancelled");
@@ -129,7 +140,7 @@ namespace AutomationFramework
                             Logger?.Error(path, $"Stage {stage} faulted: {t.Exception}");
                             break;
                         default:
-                            Logger?.Fatal(path, $"Something unexpected happened with stage {stage}");
+                            Logger?.Fatal(path, $"Something unexpected happened with stage {stage}: {t.Exception}");
                             break;
                     }
                 });
@@ -146,7 +157,7 @@ namespace AutomationFramework
             return Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).OrderBy(x => x).ToArray();
         }
 
-        private void RunChildren(IRunInfo runInfo, StagePath path, IMetaData metaData, IModule stage)
+        private void RunChildren(StagePath path, IModule stage)
         {
             List<Task> tasks = new List<Task>();
             foreach (var childPath in GetChildPaths(path))
@@ -156,11 +167,11 @@ namespace AutomationFramework
 
                 if (stage.MaxParallelChildren == 1)
                 {
-                    RunStage(runInfo, childPath, metaData, child);
+                    RunStage(childPath, child);
                 }
                 else
                 {
-                    tasks.Add(RunStageInParallel(runInfo.Clone(), childPath.Clone(), DataLayer.GetMetaData(runInfo), child));
+                    tasks.Add(RunStageInParallel(childPath.Clone(), child));
                     if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
                         tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
                 }
@@ -176,22 +187,14 @@ namespace AutomationFramework
         /// <returns>The updated run info</returns>
         private IRunInfo Initialize(IRunInfo runInfo, IMetaData metaData)
         {
-            try
-            {
-                if (HasRunBeenCalled) throw new Exception("A job instance can only be run once");
-                HasRunBeenCalled = true;
+            if (HasRunBeenCalled) throw new Exception("A job instance can only be run once");
+            HasRunBeenCalled = true;
 
-                ValidateRunInfo(runInfo);
-                MetaData = metaData;
-                runInfo = DataLayer.GetJobId(this, runInfo);
-                runInfo = DataLayer.CreateRequest(runInfo, metaData);
-                return runInfo;
-            }
-            catch (Exception ex)
-            {
-                Logger?.Error($"Failed to initialize job: {ex}");
-                throw;
-            }
+            ValidateRunInfo(runInfo);
+            MetaData = metaData;
+            runInfo = DataLayer.GetJobId(this, runInfo);
+            runInfo = DataLayer.CreateRequest(runInfo, metaData);
+            return runInfo;
         }
 
         /// <summary>

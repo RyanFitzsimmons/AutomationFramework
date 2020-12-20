@@ -53,5 +53,45 @@ namespace AutomationFramework.UnitTests
                 return message;
             return $"{path} - {message}";
         }
+
+        public void Information(object message)
+        {
+            Information(message.ToString());
+        }
+
+        public void Information(StagePath path, object message)
+        {
+            Information(path, message.ToString());
+        }
+
+        public void Warning(object message)
+        {
+            Warning(message.ToString());
+        }
+
+        public void Warning(StagePath path, object message)
+        {
+            Warning(path, message.ToString());
+        }
+
+        public void Error(object message)
+        {
+            Error(message.ToString());
+        }
+
+        public void Error(StagePath path, object message)
+        {
+            Error(path, message.ToString());
+        }
+
+        public void Fatal(object message)
+        {
+            Fatal(message.ToString());
+        }
+
+        public void Fatal(StagePath path, object message)
+        {
+            Fatal(path, message.ToString());
+        }
     }
 }

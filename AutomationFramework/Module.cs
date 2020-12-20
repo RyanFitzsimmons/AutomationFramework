@@ -10,12 +10,14 @@ namespace AutomationFramework
     public abstract class Module<TDataLayer> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer
     {
         /// <summary>
-        /// Takes the stage module and an IEnumerable of child stage modules
+        /// Takes the child stage module and meta data as input.
+        /// The main use of this is for a module with a result to pass
+        /// information onto its children.
         /// </summary>
-        public Action<IModule, IModule, IMetaData> ConfigureChild { get; set; }
-        public Action<IModule, IRunInfo, StagePath> Work { get; set; }
+        public Action<IModule, IMetaData> ConfigureChild { get; set; }
+        public Action<IModule, IMetaData> Work { get; set; }
 
-        internal protected override void Run()
+        internal protected override void RunWork()
         {
             if (MeetsRunCriteria())
             {
@@ -43,11 +45,11 @@ namespace AutomationFramework
         }
 
         protected virtual void DoWork() =>
-            Work?.Invoke(this, RunInfo, StagePath);
+            Work?.Invoke(this, MetaData);
 
         public override void InvokeConfigureChild(IModule child)
         {
-            ConfigureChild?.Invoke(this, child, MetaData);
+            ConfigureChild?.Invoke(child, MetaData);
             if (!IsEnabled) child.IsEnabled = false;
         }
     }

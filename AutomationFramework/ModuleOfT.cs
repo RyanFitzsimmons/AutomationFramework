@@ -8,13 +8,15 @@ namespace AutomationFramework
     public abstract class Module<TDataLayer, TResult> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer where TResult : class
     {
         /// <summary>
-        /// Takes the stage module, stage module result and an IEnumerable of child stage modules
+        /// Takes the stage module result and an IEnumerable of child stage modules
+        /// The main use of this is for a module with a result to pass
+        /// information onto its children.
         /// </summary>
-        public Action<IModule, TResult, IModule, IMetaData> ConfigureChildWithResult { get; set; }
+        public Action<TResult, IModule, IMetaData> ConfigureChildWithResult { get; set; }
 
-        public Func<IModule, IRunInfo, StagePath, TResult> Work { get; set; }
+        public Func<IModule, IMetaData, TResult> Work { get; set; }
 
-        internal protected override void Run()
+        internal protected override void RunWork()
         {
             if (MeetsRunCriteria())
             {
@@ -38,14 +40,14 @@ namespace AutomationFramework
         protected virtual void OnRunFinish(TResult result) => SetStatusBase(StageStatuses.Completed);
 
         protected virtual TResult DoWork() => 
-            Work == null ? default : Work.Invoke(this, RunInfo, StagePath);
+            Work == null ? default : Work.Invoke(this, MetaData);
 
         public override void InvokeConfigureChild(IModule child)
         {
             CheckForCancellation();
             var result = GetResult();
             if (result == default(TResult)) Logger?.Warning($"{this} no result found");
-            else ConfigureChildWithResult?.Invoke(this, result, child, MetaData); 
+            else ConfigureChildWithResult?.Invoke(result, child, MetaData); 
 
             if (!IsEnabled) child.IsEnabled = false;
         }

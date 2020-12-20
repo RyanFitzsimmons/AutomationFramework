@@ -10,7 +10,7 @@ namespace AutomationFramework.UnitTests.TestSetup
     {
         public void CheckExistingJob(IRunInfo runInfo, string version)
         {
-            throw new NotSupportedException("Data layer is for Run type only");
+            //throw new NotSupportedException("Data layer is for Run type only");
         }
 
         public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo)

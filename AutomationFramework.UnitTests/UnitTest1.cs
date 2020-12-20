@@ -18,22 +18,346 @@ namespace AutomationFramework.UnitTests
         }
 
         [Fact]
-        public void Test1()
+        public void Run()
         {
             var job = new TestKernel(1, new TestLogger());
             job.Run(RunInfo<string>.Empty, new TestMetaData());
-            Test1Results(job);
+            RunResults(job);
         }
 
         [Fact]
-        public void Test1Parallel()
+        public void RunParallel()
         {
             var job = new TestKernel(3, new TestLogger());
             job.Run(RunInfo<string>.Empty, new TestMetaData());
-            Test1Results(job);
+            RunResults(job);
         }
 
-        private static void Test1Results(TestKernel job)
+        [Fact]
+        public void RunSingle()
+        {
+            var job = new TestKernel(1, new TestLogger());
+            job.Run(new RunInfo<string>(RunType.RunSingle, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            RunSingleResults(job);
+        }
+
+        [Fact]
+        public void RunSingleParallel()
+        {
+            var job = new TestKernel(3, new TestLogger());
+            job.Run(new RunInfo<string>(RunType.RunSingle, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            RunSingleResults(job);
+        }
+
+        [Fact]
+        public void RunFrom()
+        {
+            var job = new TestKernel(1, new TestLogger());
+            job.Run(new RunInfo<string>(RunType.RunFrom, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            RunFromResults(job);
+        }
+
+        [Fact]
+        public void RunFromParallel()
+        {
+            var job = new TestKernel(3, new TestLogger());
+            job.Run(new RunInfo<string>(RunType.RunFrom, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            RunFromResults(job);
+        }
+
+        private static void RunSingleResults(TestKernel job)
+        {
+            Assert.Equal(13, job.TestModules.Count);
+
+            foreach (TestModuleWithResult module in job.TestModules)
+            {
+                switch (module.StagePath.ToString())
+                {
+                    case "1-2":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Running", action);
+                                    break;
+                                case 2:
+                                    Assert.Equal("Doing Work", action);
+                                    break;
+                                case 3:
+                                    Assert.Equal("Save Result", action);
+                                    break;
+                                case 4:
+                                    Assert.Equal("Set Status Completed", action);
+                                    break;
+                                case 5:
+                                case 6:
+                                case 7:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Current Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1-2-1":
+                    case "1-2-2":
+                    case "1-2-3":
+                    case "1-3-1":
+                    case "1-3-2":
+                    case "1-3-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Bypassed", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Current Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1":
+                    case "1-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Bypassed", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Existing Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1-1-1":
+                    case "1-1-2":
+                    case "1-1-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Disabled", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Current Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1-1":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Disabled", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Existing Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    default:
+                        throw new Exception("Unknown stage");
+                }
+            }
+        }
+
+        private static void RunFromResults(TestKernel job)
+        {
+            Assert.Equal(13, job.TestModules.Count);
+
+            foreach (TestModuleWithResult module in job.TestModules)
+            {
+                switch (module.StagePath.ToString())
+                {
+                    case "1-2":
+                    case "1-2-1":
+                    case "1-2-2":
+                    case "1-2-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        { 
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Running", action);
+                                    break;
+                                case 2:
+                                    Assert.Equal("Doing Work", action);
+                                    break;
+                                case 3:
+                                    Assert.Equal("Save Result", action);
+                                    break;
+                                case 4:
+                                    Assert.Equal("Set Status Completed", action);
+                                    break;
+                                case 5:
+                                case 6:
+                                case 7:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Current Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1":
+                    case "1-3-1":
+                    case "1-3-2":
+                    case "1-3-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Bypassed", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Current Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Bypassed", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Existing Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1-1-1":
+                    case "1-1-2":
+                    case "1-1-3":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Disabled", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Current Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    case "1-1":
+                        for (int j = 0; j < module.Actions.Count; j++)
+                        {
+                            var action = module.Actions[j];
+                            switch (j)
+                            {
+                                case 0:
+                                    Assert.Equal("Create Stage", action);
+                                    break;
+                                case 1:
+                                    Assert.Equal("Set Status Disabled", action);
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                        Assert.Equal("Get Existing Result", action);
+                                    break;
+                                default:
+                                    throw new Exception("No test implemented");
+                            }
+                        }
+                        break;
+                    default:
+                        throw new Exception("Unknown stage");
+                }
+            }
+        }
+
+        private static void RunResults(TestKernel job)
         {
             Assert.Equal(13, job.TestModules.Count);
 

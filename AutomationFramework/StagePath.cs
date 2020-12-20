@@ -76,12 +76,12 @@ namespace AutomationFramework
 
         public int Length { get { return Indices.Length; } }
 
-        private void ValidateIndices(IEnumerable<int> indices)
+        private static void ValidateIndices(IEnumerable<int> indices)
         {
             foreach (var index in indices) ValidateIndex(index);
         }
 
-        private void ValidateIndex(int index)
+        private static void ValidateIndex(int index)
         {
             if (index < 1) throw new Exception("A stage path index cannot be less than one");
         }
@@ -164,7 +164,7 @@ namespace AutomationFramework
 
         public override bool Equals(object other)
         {
-            return other is StagePath && this.Equals((StagePath)other);
+            return other is StagePath path && Equals(path);
         }
 
         public override int GetHashCode()
