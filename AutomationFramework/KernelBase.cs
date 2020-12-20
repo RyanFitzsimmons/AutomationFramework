@@ -52,8 +52,7 @@ namespace AutomationFramework
             {
                 Logger?.Information($"{Name} Started");
                 runInfo = Initialize(runInfo, metaData);
-                BuildStages();
-                InitializeStages(runInfo);
+                BuildStages(runInfo);
                 if (runInfo.Type != RunType.BuildOnly)
                     RunStage(StagePath.Root, GetStage(StagePath.Root));
                 Logger?.Information($"{Name} Finished");
@@ -69,16 +68,12 @@ namespace AutomationFramework
             }
         }
 
-        private void InitializeStages(IRunInfo runInfo)
-        {
-            foreach (var stage in Stages)
-                stage.Value.Initialize(runInfo.Clone(), stage.Key.Clone(), DataLayer.GetMetaData(runInfo), Logger);
-        }
-
-        private void BuildStages()
+        private void BuildStages(IRunInfo runInfo)
         {
             var builder = Configure();
             Stages = builder.Build(StagePath.Root);
+            foreach (var stage in Stages.OrderBy(x => x.Key))
+                stage.Value.Build(runInfo.Clone(), stage.Key.Clone(), DataLayer.GetMetaData(runInfo), Logger);
         }
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;

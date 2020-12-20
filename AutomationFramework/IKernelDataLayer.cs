@@ -13,6 +13,5 @@ namespace AutomationFramework
         IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData);
         IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo);
         void CheckExistingJob(IRunInfo runInfo, string version);
-
     }
 }

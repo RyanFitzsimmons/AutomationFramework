@@ -37,7 +37,7 @@ namespace AutomationFramework
         public virtual int MaxParallelChildren { get; set; } = 1;
         protected internal IMetaData MetaData { get; set; }
 
-        public virtual Action<IModule, IMetaData> OnInitialize { get; set; }
+        public virtual Action<IModule, IMetaData> OnBuild { get; set; }
         public virtual Action<IModule, IMetaData> OnCompletion { get; set; }
         public virtual Action<IModule, IMetaData> PreCancellation { get; set; }
         public virtual Action<IModule, IMetaData> OnCancellation { get; set; }
@@ -48,7 +48,6 @@ namespace AutomationFramework
             StagePath = path;
             MetaData = metaData;
             Logger = logger;
-            Logger?.Information(path, $"{Name}");
         }
 
         protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
@@ -56,13 +55,14 @@ namespace AutomationFramework
             return MetaData as TMetaData;
         }
 
-        public void Initialize(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
+        public void Build(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
         {
             try
             {
+                logger?.Information(path, $"{Name} Building");
                 SetProperties(runInfo, path, metaData, logger);
                 DataLayer.CreateStage(this);
-                OnInitialize?.Invoke(this, metaData);
+                OnBuild?.Invoke(this, metaData);
             }
             catch 
             {
