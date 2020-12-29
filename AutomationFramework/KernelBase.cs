@@ -53,7 +53,7 @@ namespace AutomationFramework
                 Logger?.Information($"{Name} Started");
                 runInfo = Initialize(runInfo, metaData);
                 BuildStages(runInfo);
-                if (runInfo.Type != RunType.BuildOnly)
+                if (runInfo.Type != RunType.Build)
                     RunStage(StagePath.Root, GetStage(StagePath.Root));
                 Logger?.Information($"{Name} Finished");
             }

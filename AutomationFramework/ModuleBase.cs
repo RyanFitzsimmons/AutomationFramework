@@ -111,9 +111,9 @@ namespace AutomationFramework
         protected bool MeetsRunCriteria() =>
             RunInfo.Type switch
             {
-                RunType.Run => true,
-                RunType.RunFrom => StagePath == RunInfo.Path || StagePath.IsDescendantOf(RunInfo.Path),
-                RunType.RunSingle => StagePath == RunInfo.Path,
+                RunType.Standard => true,
+                RunType.From => StagePath == RunInfo.Path || StagePath.IsDescendantOf(RunInfo.Path),
+                RunType.Single => StagePath == RunInfo.Path,
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 

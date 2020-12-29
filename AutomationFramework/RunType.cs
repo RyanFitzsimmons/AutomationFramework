@@ -7,9 +7,9 @@ namespace AutomationFramework
     [Serializable]
     public enum RunType
     {
-        Run = 0,
-        RunFrom = 1,
-        RunSingle = 2,
-        BuildOnly = 3,
+        Standard = 0,
+        From = 1,
+        Single = 2,
+        Build = 3,
     }
 }

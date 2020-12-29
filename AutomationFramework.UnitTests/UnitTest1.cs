@@ -37,7 +37,7 @@ namespace AutomationFramework.UnitTests
         public void RunSingle()
         {
             var job = new TestKernel(1, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.RunSingle, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunSingleResults(job);
         }
 
@@ -45,7 +45,7 @@ namespace AutomationFramework.UnitTests
         public void RunSingleParallel()
         {
             var job = new TestKernel(3, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.RunSingle, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunSingleResults(job);
         }
 
@@ -53,7 +53,7 @@ namespace AutomationFramework.UnitTests
         public void RunFrom()
         {
             var job = new TestKernel(1, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.RunFrom, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunFromResults(job);
         }
 
@@ -61,7 +61,7 @@ namespace AutomationFramework.UnitTests
         public void RunFromParallel()
         {
             var job = new TestKernel(3, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.RunFrom, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunFromResults(job);
         }
 
@@ -443,25 +443,25 @@ namespace AutomationFramework.UnitTests
             // valid run infos
             var validInfos = new List<RunInfo<string>>
             {
-                new RunInfo<string>(RunType.Run, null, null, StagePath.Empty),
-                new RunInfo<string>(RunType.RunFrom, "1", null, StagePath.Root),
-                new RunInfo<string>(RunType.RunSingle, "1", null, StagePath.Root)
+                new RunInfo<string>(RunType.Standard, null, null, StagePath.Empty),
+                new RunInfo<string>(RunType.From, "1", null, StagePath.Root),
+                new RunInfo<string>(RunType.Single, "1", null, StagePath.Root)
             };
 
             // invalid run infos
             var invalidInfos = new List<RunInfo<string>>
             {
-                new RunInfo<string>(RunType.Run, "1", null, StagePath.Empty),
-                new RunInfo<string>(RunType.Run, null, null, StagePath.Root),
-                new RunInfo<string>(RunType.Run, "1", null, StagePath.Root),
+                new RunInfo<string>(RunType.Standard, "1", null, StagePath.Empty),
+                new RunInfo<string>(RunType.Standard, null, null, StagePath.Root),
+                new RunInfo<string>(RunType.Standard, "1", null, StagePath.Root),
 
-                new RunInfo<string>(RunType.RunFrom, null, null, StagePath.Root),
-                new RunInfo<string>(RunType.RunFrom, "1", null, StagePath.Empty),
-                new RunInfo<string>(RunType.RunFrom, null, null, StagePath.Empty),
+                new RunInfo<string>(RunType.From, null, null, StagePath.Root),
+                new RunInfo<string>(RunType.From, "1", null, StagePath.Empty),
+                new RunInfo<string>(RunType.From, null, null, StagePath.Empty),
 
-                new RunInfo<string>(RunType.RunSingle, null, null, StagePath.Root),
-                new RunInfo<string>(RunType.RunSingle, "1", null, StagePath.Empty),
-                new RunInfo<string>(RunType.RunSingle, null, null, StagePath.Empty)
+                new RunInfo<string>(RunType.Single, null, null, StagePath.Root),
+                new RunInfo<string>(RunType.Single, "1", null, StagePath.Empty),
+                new RunInfo<string>(RunType.Single, null, null, StagePath.Empty)
             };
 
             string exMsg;
