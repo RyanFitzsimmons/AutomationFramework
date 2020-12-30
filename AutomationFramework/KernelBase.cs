@@ -81,7 +81,7 @@ namespace AutomationFramework
 
         private void Stage_OnLog(IModule stage, LogLevels level, object message)
         {
-            Logger.Write(level, stage.StagePath, message);
+            Logger?.Write(level, stage.StagePath, message);
         }
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
@@ -93,11 +93,19 @@ namespace AutomationFramework
 
         public void Cancel(StagePath path)
         {
-            CancellationSource.Cancel();
-            foreach(var pathToCancel in GetPathAndDescendantsOf(path))
+            try
             {
-                Stages.TryGetValue(pathToCancel, out IModule stage);
-                stage.Cancel();
+                CancellationSource.Cancel();
+                foreach (var pathToCancel in GetPathAndDescendantsOf(path))
+                {
+                    Stages.TryGetValue(pathToCancel, out IModule stage);
+                    stage.Cancel();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.Write(LogLevels.Fatal, "Error during cancellation");
+                Logger?.Write(LogLevels.Fatal, ex);
             }
         }
 
@@ -143,7 +151,7 @@ namespace AutomationFramework
                             Logger?.Write(LogLevels.Error, path, $"Stage {stage} faulted: {t.Exception}");
                             break;
                         default:
-                            Logger?.Write(LogLevels.Fatal, path, $"Something unexpected happened with stage {stage}: {t.Exception}");
+                            Logger?.Write(LogLevels.Error, path, $"Something unexpected happened with stage {stage}: {t.Exception}");
                             break;
                     }
                 });
