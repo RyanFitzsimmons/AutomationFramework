@@ -27,6 +27,7 @@ namespace AutomationFramework.UnitTests.TestSetup
                 m.Name = Name + " " + 0;
                 m.IsEnabled = true;
                 m.MaxParallelChildren = MaxParallelChildren;
+                m.OnLog += (m, l, msg) => { };
             });
 
             for (int i = 0; i < 3; i++)

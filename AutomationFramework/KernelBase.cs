@@ -50,21 +50,21 @@ namespace AutomationFramework
         {
             try
             {
-                Logger?.Information($"{Name} Started");
+                Logger?.Write(LogLevels.Information, $"{Name} Started");
                 runInfo = Initialize(runInfo, metaData);
                 BuildStages(runInfo);
                 if (runInfo.Type != RunType.Build)
                     RunStage(StagePath.Root, GetStage(StagePath.Root));
-                Logger?.Information($"{Name} Finished");
+                Logger?.Write(LogLevels.Information, $"{Name} Finished");
             }
             catch (OperationCanceledException)
             {
-                Logger?.Warning($"{Name} Canceled");
+                Logger?.Write(LogLevels.Warning, $"{Name} Canceled");
             }
             catch (Exception ex)
             {
-                Logger?.Fatal($"{Name} threw an exception");
-                Logger?.Fatal(ex);
+                Logger?.Write(LogLevels.Fatal, $"{Name} threw an exception");
+                Logger?.Write(LogLevels.Fatal, ex);
             }
         }
 
@@ -73,7 +73,15 @@ namespace AutomationFramework
             var builder = Configure();
             Stages = builder.Build(StagePath.Root);
             foreach (var stage in Stages.OrderBy(x => x.Key))
-                stage.Value.Build(runInfo.Clone(), stage.Key.Clone(), DataLayer.GetMetaData(runInfo), Logger);
+            {
+                stage.Value.OnLog += Stage_OnLog;
+                stage.Value.Build(runInfo.Clone(), stage.Key.Clone(), DataLayer.GetMetaData(runInfo));
+            }
+        }
+
+        private void Stage_OnLog(IModule stage, LogLevels level, object message)
+        {
+            Logger.Write(level, stage.StagePath, message);
         }
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
@@ -107,11 +115,11 @@ namespace AutomationFramework
             }
             catch (OperationCanceledException)
             {
-                Logger?.Warning(path, $"Stage {stage} was cancelled");
+                Logger?.Write(LogLevels.Warning, path, $"Stage {stage} was cancelled");
             }
             catch (Exception ex)
             {
-                Logger?.Error(path, $"Stage {stage} faulted: {ex}");
+                Logger?.Write(LogLevels.Error, path, $"Stage {stage} faulted: {ex}");
             }
         }
 
@@ -129,13 +137,13 @@ namespace AutomationFramework
                             RunChildren(path, stage);
                             break;
                         case TaskStatus.Canceled:
-                            Logger?.Warning(path, $"Stage {stage} was cancelled");
+                            Logger?.Write(LogLevels.Warning, path, $"Stage {stage} was cancelled");
                             break;
                         case TaskStatus.Faulted:
-                            Logger?.Error(path, $"Stage {stage} faulted: {t.Exception}");
+                            Logger?.Write(LogLevels.Error, path, $"Stage {stage} faulted: {t.Exception}");
                             break;
                         default:
-                            Logger?.Fatal(path, $"Something unexpected happened with stage {stage}: {t.Exception}");
+                            Logger?.Write(LogLevels.Fatal, path, $"Something unexpected happened with stage {stage}: {t.Exception}");
                             break;
                     }
                 });

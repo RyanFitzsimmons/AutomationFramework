@@ -10,6 +10,9 @@ namespace AutomationFramework
     /// <typeparam name="TId">The ID type of the job and request. Should only be used to store immutable types.</typeparam>
     public class RunInfo<TId> : IRunInfo
     {
+        public RunInfo(RunInfo<TId> runInfo)
+            : this(runInfo.Type, runInfo.JobId, runInfo.RequestId, new StagePath(runInfo.Path)) { }
+
         public RunInfo(RunType type, TId jobId, TId requestId, StagePath path)
         {
             Type = type;
@@ -140,7 +143,7 @@ namespace AutomationFramework
 
         public IRunInfo Clone()
         {
-            return new RunInfo<TId>(Type, JobId, RequestId, Path.Clone());
+            return new RunInfo<TId>(this);
         }
 
         public static bool operator ==(RunInfo<TId> a, RunInfo<TId> b)

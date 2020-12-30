@@ -8,6 +8,11 @@ namespace AutomationFramework
 {
     public interface IKernelDataLayer
     {
+        /// <summary>
+        /// Should return a new instance every call
+        /// </summary>
+        /// <param name="runInfo">The run info</param>
+        /// <returns>A unique copy of the meta data</returns>
         IMetaData GetMetaData(IRunInfo runInfo);
         IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo);
         IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData);

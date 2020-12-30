@@ -8,6 +8,9 @@ namespace AutomationFramework
 {
     public class StagePath : IEquatable<StagePath>, IComparable
     {
+        public StagePath(StagePath path) 
+            : this(path.Indices) { }
+
         public StagePath(params int[] indices)
         {
             ValidateIndices(indices);
@@ -174,7 +177,7 @@ namespace AutomationFramework
 
         public StagePath Clone()
         {
-            return new StagePath(Indices);
+            return new StagePath(this);
         }
 
         public int CompareTo(object obj)

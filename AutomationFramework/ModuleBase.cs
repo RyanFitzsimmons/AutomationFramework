@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
+    /// <summary>
+    /// Modules are not thread safe and because of this no variables should be 
+    /// accessed from outside the module while the stage is in progress.
+    /// </summary>
+    /// <typeparam name="TDataLayer">The module data layer</typeparam>
     public abstract class ModuleBase<TDataLayer> : IModule where TDataLayer : IModuleDataLayer
     {
         public ModuleBase()
@@ -18,7 +23,6 @@ namespace AutomationFramework
 
         protected TDataLayer DataLayer { get; }
 
-        protected ILogger Logger { get; private set; }
         public IRunInfo RunInfo { get; private set; }
         public StagePath StagePath { get; private set; }
 
@@ -37,17 +41,18 @@ namespace AutomationFramework
         public virtual int MaxParallelChildren { get; set; } = 1;
         protected internal IMetaData MetaData { get; set; }
 
-        public virtual Action<IModule, IMetaData> OnBuild { get; set; }
-        public virtual Action<IModule, IMetaData> OnCompletion { get; set; }
-        public virtual Action<IModule, IMetaData> PreCancellation { get; set; }
-        public virtual Action<IModule, IMetaData> OnCancellation { get; set; }
+        public event Action<IModule, LogLevels, object> OnLog;
+        public event Action<IModule, IMetaData> OnBuild;
+        public event Action<IModule, IMetaData> OnCompletion;
+        public event Action<IModule, IMetaData> OnCancellation;
 
-        internal void SetProperties(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
+        protected virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
+
+        internal void SetProperties(IRunInfo runInfo, StagePath path, IMetaData metaData)
         {
             RunInfo = runInfo;
             StagePath = path;
             MetaData = metaData;
-            Logger = logger;
         }
 
         protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
@@ -55,12 +60,12 @@ namespace AutomationFramework
             return MetaData as TMetaData;
         }
 
-        public void Build(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger)
+        public void Build(IRunInfo runInfo, StagePath path, IMetaData metaData)
         {
             try
             {
-                logger?.Information(path, $"{Name} Building");
-                SetProperties(runInfo, path, metaData, logger);
+                Log(LogLevels.Information, $"{Name} Building");
+                SetProperties(runInfo, path, metaData);
                 DataLayer.CreateStage(this);
                 OnBuild?.Invoke(this, metaData);
             }
@@ -68,7 +73,7 @@ namespace AutomationFramework
             {
                 /// We log here to capture which stage faulted
                 /// The exception is then thrown and logged within the kernel
-                Logger?.Error(path, "Failed to initialize");
+                Log(LogLevels.Error, "Failed to initialize");
                 throw;
             }
         }
@@ -104,7 +109,7 @@ namespace AutomationFramework
 
         internal protected void SetStatusBase(StageStatuses status)
         {
-            Logger?.Information(StagePath, status);
+            Log(LogLevels.Information, status);
             DataLayer.SetStatus(this, status);
         }
 
@@ -123,7 +128,6 @@ namespace AutomationFramework
 
         public void Cancel()
         {
-            PreCancellation?.Invoke(this, MetaData);
             CancellationSource.Cancel();
         }
 

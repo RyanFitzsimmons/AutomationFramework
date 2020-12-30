@@ -15,8 +15,10 @@ namespace AutomationFramework
         IRunInfo RunInfo { get; }
         StagePath StagePath { get; }
 
+        event Action<IModule, LogLevels, object> OnLog;
+
         CancellationToken GetCancellationToken();
-        void Build(IRunInfo runInfo, StagePath path, IMetaData metaData, ILogger logger);
+        void Build(IRunInfo runInfo, StagePath path, IMetaData metaData);
         void Run();
         void Cancel();
         void InvokeConfigureChild(IModule child);

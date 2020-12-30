@@ -46,7 +46,7 @@ namespace AutomationFramework
         {
             CheckForCancellation();
             var result = GetResult();
-            if (result == default(TResult)) Logger?.Warning($"{this} no result found");
+            if (result == default(TResult)) Log(LogLevels.Warning, $"{this} no result found");
             else ConfigureChildWithResult?.Invoke(result, child, MetaData); 
 
             if (!IsEnabled) child.IsEnabled = false;
