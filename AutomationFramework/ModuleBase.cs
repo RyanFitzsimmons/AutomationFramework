@@ -45,6 +45,10 @@ namespace AutomationFramework
         public event Action<IModule, IMetaData> OnBuild;
         public event Action<IModule, IMetaData> OnCompletion;
         public event Action<IModule, IMetaData> OnCancellation;
+        /// <summary>
+        /// Be aware this is called from the kernel thread
+        /// </summary>
+        public event Action<IModule> PreCancellation;
 
         protected virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
@@ -128,6 +132,7 @@ namespace AutomationFramework
 
         public void Cancel()
         {
+            PreCancellation?.Invoke(this);
             CancellationSource.Cancel();
         }
 
