@@ -9,6 +9,10 @@ namespace AutomationFramework
 {
     public abstract class Module<TDataLayer> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer
     {
+        protected Module(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        {
+        }
+
         /// <summary>
         /// Takes the child stage module and meta data as input.
         /// The main use of this is for a module with a result to pass
@@ -50,7 +54,6 @@ namespace AutomationFramework
         public override void InvokeConfigureChild(IModule child)
         {
             ConfigureChild?.Invoke(child, MetaData);
-            if (!IsEnabled) child.IsEnabled = false;
         }
     }
 }

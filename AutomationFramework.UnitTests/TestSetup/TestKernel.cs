@@ -19,31 +19,30 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         public List<IModule> TestModules { get; private set; } = new List<IModule>();
 
-        protected override IStageBuilder Configure()
+        protected override IStageBuilder Configure(IRunInfo runInfo)
         {
-            var builder = GetStageBuilder<TestModuleWithResult>();
-            builder.Configure((m) =>
-            {
-                m.Name = Name + " " + 0;
-                m.IsEnabled = true;
-                m.MaxParallelChildren = MaxParallelChildren;
-                m.OnLog += (m, l, msg) => { };
-            });
+            var builder = GetStageBuilder<TestModuleWithResult>(runInfo);
+            builder.Configure((ri, sp, md) => new(ri, sp, md)
+                {
+                    Name = Name + " " + 0,
+                    IsEnabled = true,
+                    MaxParallelChildren = MaxParallelChildren,
+                });
 
             for (int i = 0; i < 3; i++)
                 builder.Add<TestModuleWithResult>((b) => CreateChildModule1(b, i));
 
-            TestModules.AddRange(builder.BuildToArray(StagePath.Root));
+            TestModules.AddRange(builder.BuildToArray());
             return builder;
         }
 
         private IStageBuilder CreateChildModule1(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            builder.Configure((m) =>
+            builder.Configure((ri, sp, md) => new(ri, sp, md)
             {
-                m.Name = Name + " " + index;
-                m.IsEnabled = index != 0;
-                m.MaxParallelChildren = MaxParallelChildren;
+                Name = Name + " " + index,
+                IsEnabled = index != 0,
+                MaxParallelChildren = MaxParallelChildren
             });
 
             for (int i = 0; i < 3; i++)
@@ -54,11 +53,11 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         private IStageBuilder CreateChildModule2(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            return builder.Configure((m) =>
+            return builder.Configure((ri, sp, md) => new(ri, sp, md)
             {
-                m.Name = Name + " " + index;
-                m.IsEnabled = true;
-                m.MaxParallelChildren = MaxParallelChildren;
+                Name = Name + " " + index,
+                IsEnabled = true,
+                MaxParallelChildren = MaxParallelChildren
             });
         }
     }

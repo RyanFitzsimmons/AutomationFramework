@@ -9,20 +9,20 @@ namespace AutomationFramework
     public class StagePath : IEquatable<StagePath>, IComparable
     {
         public StagePath(StagePath path) 
-            : this(path.Indices) { }
+            : this(path.Indices.ToArray()) { }
 
         public StagePath(params int[] indices)
         {
-            ValidateIndices(indices);
-            _Indices = indices.ToArray();
+            _Indices = indices == null ? Array.Empty<int>() : indices.ToArray();
+            ValidateIndices(_Indices);
         }
 
-        private int[] _Indices;
+        private readonly int[] _Indices;
 
         /// <summary>
         /// Represents the path
         /// </summary>
-        public int[] Indices { get { return _Indices ??= Array.Empty<int>(); } }
+        public IEnumerable<int> Indices { get { return _Indices; } }
 
         /// <summary>
         /// Returns the last index of the Indices. If Indices is empty return 0.
@@ -31,7 +31,7 @@ namespace AutomationFramework
         {
             get
             {
-                if (Indices.Length == 0) return 0;
+                if (_Indices.Length == 0) return 0;
                 return Indices.Last();
             }
         }
@@ -44,7 +44,7 @@ namespace AutomationFramework
         {
             get
             {
-                return Indices[index];
+                return _Indices[index];
             }
         }
 
@@ -77,7 +77,7 @@ namespace AutomationFramework
             }
         }
 
-        public int Length { get { return Indices.Length; } }
+        public int Length { get { return _Indices.Length; } }
 
         private static void ValidateIndices(IEnumerable<int> indices)
         {

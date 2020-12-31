@@ -8,7 +8,11 @@ namespace AutomationFramework.UnitTests.TestSetup
 {
     public class TestModuleWithResult : Module<ModuleTestDataLayer, TestModuleResult>
     {
-        public override string Name { get; set; } = "Test Stage With Result";
+        public TestModuleWithResult(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        {
+        }
+
+        public override string Name { get; init; } = "Test Stage With Result";
 
         public List<string> Actions { get; } = new List<string>();
 

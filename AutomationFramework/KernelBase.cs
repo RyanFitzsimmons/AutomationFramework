@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,15 +35,11 @@ namespace AutomationFramework
         /// </summary>
         /// <typeparam name="TMetaData"></typeparam>
         /// <returns>Meta data</returns>
-        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
-        {
-            return MetaData as TMetaData;
-        }
+        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData => 
+            MetaData as TMetaData;
 
-        protected StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule
-        {
-            return new StageBuilder<TModule>();
-        }
+        protected StageBuilder<TModule> GetStageBuilder<TModule>(IRunInfo runInfo) where TModule : IModule => 
+            new StageBuilder<TModule>(runInfo, StagePath.Root, () => DataLayer.GetMetaData(runInfo));
 
         public void Run(IRunInfo runInfo, IMetaData metaData)
         {
@@ -70,26 +65,28 @@ namespace AutomationFramework
 
         private void BuildStages(IRunInfo runInfo)
         {
-            var builder = Configure();
-            Stages = builder.Build(StagePath.Root);
+            var builder = Configure(runInfo);
+            Stages = builder.Build();
             foreach (var stage in Stages.OrderBy(x => x.Key))
             {
+                var metaData = DataLayer.GetMetaData(runInfo);
+                PreStageBuild(stage.Value, metaData);
                 stage.Value.OnLog += Stage_OnLog;
-                stage.Value.Build(runInfo.Clone(), stage.Key.Clone(), DataLayer.GetMetaData(runInfo));
+                stage.Value.Build();
+                PostStageBuild(stage.Value, metaData);
             }
         }
 
-        private void Stage_OnLog(IModule stage, LogLevels level, object message)
-        {
+        private void Stage_OnLog(IModule stage, LogLevels level, object message) => 
             Logger?.Write(level, stage.StagePath, message);
-        }
+
+        protected virtual void PreStageBuild(IModule stage, IMetaData metaData) { }
+
+        protected virtual void PostStageBuild(IModule stage, IMetaData metaData) { }
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 
-        public void Cancel()
-        {
-            Cancel(StagePath.Root);
-        }
+        public void Cancel() => Cancel(StagePath.Root);
 
         public void Cancel(StagePath path)
         {
@@ -109,10 +106,8 @@ namespace AutomationFramework
             }
         }
 
-        private StagePath[] GetPathAndDescendantsOf(StagePath path)
-        {
-            return Stages.Where(x => x.Key == path || x.Key.IsDescendantOf(path)).Select(x => x.Key).ToArray();
-        }
+        private StagePath[] GetPathAndDescendantsOf(StagePath path) => 
+            Stages.Where(x => x.Key == path || x.Key.IsDescendantOf(path)).Select(x => x.Key).ToArray();
 
         private void RunStage(StagePath path, IModule stage)
         {
@@ -163,14 +158,14 @@ namespace AutomationFramework
             return stage;
         }
 
-        private StagePath[] GetChildPaths(StagePath path)
-        {
-            return Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).OrderBy(x => x).ToArray();
-        }
+        private StagePath[] GetChildPaths(StagePath path) => 
+            Stages.Where(x => path.IsParentOf(x.Key)).Select(x => x.Key).OrderBy(x => x).ToArray();
 
         private void RunChildren(StagePath path, IModule stage)
         {
             List<Task> tasks = new List<Task>();
+            if (!stage.IsEnabled) return;
+
             foreach (var childPath in GetChildPaths(path))
             {
                 var child = GetStage(childPath);
@@ -212,7 +207,7 @@ namespace AutomationFramework
         /// Creates the stages - Called at the start of the run method
         /// </summary>
         /// <returns>The root stage builder</returns>
-        protected abstract IStageBuilder Configure();
+        protected abstract IStageBuilder Configure(IRunInfo runInfo);
 
         /// <summary>
         /// Performs validation on the RunInfo

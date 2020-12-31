@@ -11,14 +11,14 @@ namespace AutomationFramework
     public class RunInfo<TId> : IRunInfo
     {
         public RunInfo(RunInfo<TId> runInfo)
-            : this(runInfo.Type, runInfo.JobId, runInfo.RequestId, new StagePath(runInfo.Path)) { }
+            : this(runInfo.Type, runInfo.JobId, runInfo.RequestId, runInfo.Path) { }
 
         public RunInfo(RunType type, TId jobId, TId requestId, StagePath path)
         {
             Type = type;
             JobId = jobId;
             RequestId = requestId;
-            Path = path;
+            Path = new StagePath(path);
         }
 
         public RunType Type { get; }
@@ -36,22 +36,24 @@ namespace AutomationFramework
                 return false;
             }
 
-            if (GetIsRunWithJobId(out exceptionMsg)) return false;
-            if (GetIsRunWithStagePath(out exceptionMsg)) return false;
-            if (GetIsRunFromWithNoJobId(out exceptionMsg)) return false;
-            if (GetIsRunFromWithNoStagePath(out exceptionMsg)) return false;
-            if (GetIsRunOnlyWithNoJobId(out exceptionMsg)) return false;
-            if (GetIsRunOnlyWithNoStagePath(out exceptionMsg)) return false;
+            if (GetIsBuildWithJobId(out exceptionMsg)) return false;
+            if (GetIsBuildWithStagePath(out exceptionMsg)) return false;
+            if (GetIsStandardWithJobId(out exceptionMsg)) return false;
+            if (GetIsStandardWithStagePath(out exceptionMsg)) return false;
+            if (GetIsFromWithNoJobId(out exceptionMsg)) return false;
+            if (GetIsFromWithNoStagePath(out exceptionMsg)) return false;
+            if (GetIsSingleWithNoJobId(out exceptionMsg)) return false;
+            if (GetIsSingleWithNoStagePath(out exceptionMsg)) return false;
 
             exceptionMsg = null;
             return true;
         }
 
-        public bool GetIsRunWithJobId(out string exceptionMsg)
+        private bool GetIsBuildWithJobId(out string exceptionMsg)
         {
-            if (Type == RunType.Standard && !EqualityComparer<TId>.Default.Equals(JobId, default))
+            if (Type == RunType.Build && !EqualityComparer<TId>.Default.Equals(JobId, default))
             {
-                exceptionMsg = "The job ID must be empty for run type 'Run'";
+                exceptionMsg = $"The job ID must be empty for run type '{nameof(RunType.Build)}'";
                 return true;
             }
 
@@ -59,11 +61,11 @@ namespace AutomationFramework
             return false;
         }
 
-        public bool GetIsRunWithStagePath(out string exceptionMsg)
+        private bool GetIsBuildWithStagePath(out string exceptionMsg)
         {
             if (Type == RunType.Standard && Path.Length > 0)
             {
-                exceptionMsg = "The stage path must be empty for run type 'Run'";
+                exceptionMsg = $"The stage path must be empty for run type '{nameof(RunType.Build)}'";
                 return true;
             }
 
@@ -71,11 +73,35 @@ namespace AutomationFramework
             return false;
         }
 
-        public bool GetIsRunFromWithNoJobId(out string exceptionMsg)
+        public bool GetIsStandardWithJobId(out string exceptionMsg)
+        {
+            if (Type == RunType.Standard && !EqualityComparer<TId>.Default.Equals(JobId, default))
+            {
+                exceptionMsg = $"The job ID must be empty for run type '{nameof(RunType.Standard)}'";
+                return true;
+            }
+
+            exceptionMsg = null;
+            return false;
+        }
+
+        public bool GetIsStandardWithStagePath(out string exceptionMsg)
+        {
+            if (Type == RunType.Standard && Path.Length > 0)
+            {
+                exceptionMsg = $"The stage path must be empty for run type '{nameof(RunType.Standard)}'";
+                return true;
+            }
+
+            exceptionMsg = null;
+            return false;
+        }
+
+        public bool GetIsFromWithNoJobId(out string exceptionMsg)
         {
             if (Type == RunType.From && EqualityComparer<TId>.Default.Equals(JobId, default))
             {
-                exceptionMsg = "A job ID must be provided for run type 'RunFrom'";
+                exceptionMsg = $"A job ID must be provided for run type '{nameof(RunType.From)}'";
                 return true;
             }
 
@@ -83,11 +109,11 @@ namespace AutomationFramework
             return false;
         }
 
-        public bool GetIsRunFromWithNoStagePath(out string exceptionMsg)
+        public bool GetIsFromWithNoStagePath(out string exceptionMsg)
         {
             if (Type == RunType.From && Path.Length == 0)
             {
-                exceptionMsg = "A stage path must be provided for run type 'RunFrom'";
+                exceptionMsg = $"A stage path must be provided for run type '{nameof(RunType.From)}'";
                 return true;
             }
 
@@ -95,11 +121,11 @@ namespace AutomationFramework
             return false;
         }
 
-        public bool GetIsRunOnlyWithNoJobId(out string exceptionMsg)
+        public bool GetIsSingleWithNoJobId(out string exceptionMsg)
         {
             if (Type == RunType.Single && EqualityComparer<TId>.Default.Equals(JobId, default))
             {
-                exceptionMsg = "A job ID must be provided for run type 'RunOnly'";
+                exceptionMsg = $"A job ID must be provided for run type '{nameof(RunType.Single)}'";
                 return true;
             }
 
@@ -107,11 +133,11 @@ namespace AutomationFramework
             return false;
         }
 
-        public bool GetIsRunOnlyWithNoStagePath(out string exceptionMsg)
+        public bool GetIsSingleWithNoStagePath(out string exceptionMsg)
         {
             if (Type == RunType.Single && Path.Length == 0)
             {
-                exceptionMsg = "A stage path must be provided for run type 'RunOnly'";
+                exceptionMsg = $"A stage path must be provided for run type '{nameof(RunType.Single)}'";
                 return true;
             }
 
@@ -122,7 +148,7 @@ namespace AutomationFramework
         public bool GetIsUnknownRunType() =>
             Type switch
             {
-                RunType.Standard or RunType.From or RunType.Single => false,
+                RunType.Standard or RunType.From or RunType.Single or RunType.Build => false,
                 _ => true,
             };
 
@@ -136,29 +162,19 @@ namespace AutomationFramework
                 Type == runInfo.Type;
         }
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(JobId, RequestId, Path, Type.GetHashCode());
-        }
+        public override int GetHashCode() =>
+            HashCode.Combine(JobId, RequestId, Path, Type.GetHashCode());
 
-        public IRunInfo Clone()
-        {
-            return new RunInfo<TId>(this);
-        }
+        public IRunInfo Clone() =>
+            new RunInfo<TId>(this);
 
-        public static bool operator ==(RunInfo<TId> a, RunInfo<TId> b)
-        {
-            return a.Equals(b);
-        }
+        public static bool operator ==(RunInfo<TId> a, RunInfo<TId> b) =>
+            a.Equals(b);
 
-        public static bool operator !=(RunInfo<TId> a, RunInfo<TId> b)
-        {
-            return !a.Equals(b);
-        }
+        public static bool operator !=(RunInfo<TId> a, RunInfo<TId> b) =>
+            !a.Equals(b);
 
-        public override string ToString()
-        {
-            return $"[{Type}]-[{JobId}]-[{RequestId}]-[{Path}]";
-        }
+        public override string ToString() =>
+            $"[{Type}]-[{JobId}]-[{RequestId}]-[{Path}]";
     }
 }

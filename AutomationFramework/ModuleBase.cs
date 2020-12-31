@@ -14,23 +14,26 @@ namespace AutomationFramework
     /// <typeparam name="TDataLayer">The module data layer</typeparam>
     public abstract class ModuleBase<TDataLayer> : IModule where TDataLayer : IModuleDataLayer
     {
-        public ModuleBase()
+        public ModuleBase(IRunInfo runInfo, StagePath stagePath, IMetaData metaData)
         {
+            RunInfo = runInfo;
+            StagePath = stagePath;
+            MetaData = metaData;
             DataLayer = Activator.CreateInstance<TDataLayer>();
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
 
+        public IRunInfo RunInfo { get; }
+        public StagePath StagePath { get; }
+        protected internal IMetaData MetaData { get; }
         protected TDataLayer DataLayer { get; }
-
-        public IRunInfo RunInfo { get; private set; }
-        public StagePath StagePath { get; private set; }
 
         /// <summary>
         /// Is enabled by default
         /// </summary>
-        public virtual bool IsEnabled { get; set; } = true;
-        public abstract string Name { get; set; }
+        public virtual bool IsEnabled { get; init; } = true;
+        public abstract string Name { get; init; }
 
         /// <summary>
         /// If zero all child stages will run in parallel. 
@@ -38,8 +41,7 @@ namespace AutomationFramework
         /// Set to 1 by default.
         /// WARNING: If this is set to run in parallel, the Work and CreateChildren functions of this stage and any child stages need to be thread safe.
         /// </summary>
-        public virtual int MaxParallelChildren { get; set; } = 1;
-        protected internal IMetaData MetaData { get; set; }
+        public virtual int MaxParallelChildren { get; init; } = 1;
 
         public event Action<IModule, LogLevels, object> OnLog;
         public event Action<IModule, IMetaData> OnBuild;
@@ -52,32 +54,26 @@ namespace AutomationFramework
 
         protected virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
-        internal void SetProperties(IRunInfo runInfo, StagePath path, IMetaData metaData)
-        {
-            RunInfo = runInfo;
-            StagePath = path;
-            MetaData = metaData;
-        }
-
         protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
         {
             return MetaData as TMetaData;
         }
 
-        public void Build(IRunInfo runInfo, StagePath path, IMetaData metaData)
+        public void Build()
         {
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
-                SetProperties(runInfo, path, metaData);
                 DataLayer.CreateStage(this);
-                OnBuild?.Invoke(this, metaData);
+                OnBuild?.Invoke(this, MetaData);
             }
-            catch 
+            catch (Exception ex)
             {
-                /// We log here to capture which stage faulted
-                /// The exception is then thrown and logged within the kernel
-                Log(LogLevels.Error, "Failed to initialize");
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                /// the exception is thrown again so the kernel knows 
+                /// to stop building
+                Log(LogLevels.Error, ex);
                 throw;
             }
         }
@@ -92,15 +88,22 @@ namespace AutomationFramework
             catch (OperationCanceledException)
             {
                 /// We catch here to set the status of the stage
-                /// The exception is logged within the kernel
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                /// the exception is thrown again so the kernel knows 
+                /// not to create the children
                 SetStatusBase(StageStatuses.Cancelled);
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
                 /// We catch here to set the status of the stage
-                /// The exception is logged within the kernel
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                /// the exception is thrown again so the kernel knows 
+                /// not to create the children
                 SetStatusBase(StageStatuses.Errored);
+                Log(LogLevels.Error, ex);
                 throw;
             }
             finally

@@ -9,41 +9,54 @@ namespace AutomationFramework
 {
     public class StageBuilder<TModule> : IStageBuilder where TModule : IModule
     {
-        private TModule Module { get; set; } = Activator.CreateInstance<TModule>();
+        public StageBuilder(IRunInfo runInfo, StagePath path, Func<IMetaData> getMetaData)
+        {
+            RunInfo = runInfo;
+            Path = path;
+            GetMetaData = getMetaData;
+        }
+
+        private IRunInfo RunInfo { get; }
+
+        private StagePath Path { get; }
+
+        private Func<IMetaData> GetMetaData { get; }
+
+        private TModule Module { get; set; }
+
+        private int ChildIndex { get; set; }
 
         private List<IStageBuilder> Builders { get; set; } = new List<IStageBuilder>();
 
-        public StageBuilder<TModule> Configure(Action<TModule> configureDelegate)
-        {
-            configureDelegate.Invoke(Module);
+        public StageBuilder<TModule> Configure(Func<IRunInfo, StagePath, IMetaData, TModule> configureDelegate)
+        {            
+            Module = configureDelegate.Invoke(RunInfo, Path, GetMetaData.Invoke());
             return this;
         }
 
         public StageBuilder<TModule> Add<TChildModule>(Action<StageBuilder<TChildModule>> builderDelegate) where TChildModule : IModule
         {
-            var builder = new StageBuilder<TChildModule>();
+            var builder = new StageBuilder<TChildModule>(RunInfo, Path.CreateChild(++ChildIndex), GetMetaData);
             builderDelegate.Invoke(builder);
             Builders.Add(builder);
             return this;
         }
 
-        public ConcurrentDictionary<StagePath, IModule> Build(StagePath path)
+        public ConcurrentDictionary<StagePath, IModule> Build()
         {
             var stages = new ConcurrentDictionary<StagePath, IModule>();
-            stages.TryAdd(path, Module);
-            int childIndex = 0;
+            stages.TryAdd(Path, Module);
             foreach (var builder in Builders)
-                foreach (var pair in builder.Build(path.CreateChild(++childIndex)))
+                foreach (var pair in builder.Build())
                     stages.TryAdd(pair.Key, pair.Value);
             return stages;
         }
 
-        public IModule[] BuildToArray(StagePath path)
+        public IModule[] BuildToArray()
         {
             List<IModule> modules = new (){ Module };
-            int childIndex = 0;
             foreach (var builder in Builders)
-                modules.AddRange(builder.BuildToArray(path.CreateChild(++childIndex)));
+                modules.AddRange(builder.BuildToArray());
             return modules.ToArray();
         }
     }

@@ -9,7 +9,7 @@ namespace AutomationFramework
 {
     public interface IStageBuilder
     {
-        ConcurrentDictionary<StagePath, IModule> Build(StagePath path);
-        IModule[] BuildToArray(StagePath path);
+        ConcurrentDictionary<StagePath, IModule> Build();
+        IModule[] BuildToArray();
     }
 }

@@ -7,6 +7,10 @@ namespace AutomationFramework
 {
     public abstract class Module<TDataLayer, TResult> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer where TResult : class
     {
+        protected Module(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        {
+        }
+
         /// <summary>
         /// Takes the stage module result and an IEnumerable of child stage modules
         /// The main use of this is for a module with a result to pass
@@ -48,8 +52,6 @@ namespace AutomationFramework
             var result = GetResult();
             if (result == default(TResult)) Log(LogLevels.Warning, $"{this} no result found");
             else ConfigureChildWithResult?.Invoke(result, child, MetaData); 
-
-            if (!IsEnabled) child.IsEnabled = false;
         }
 
         private TResult GetResult()
