@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestKernel : KernelBase<KernelTestDataLayer>
+    public class TestKernel : KernelBase<TestDataLayer>
     {
         public TestKernel(int maxParallelChildren, ILogger logger = null) : base(logger)
         {
@@ -22,8 +22,8 @@ namespace AutomationFramework.UnitTests.TestSetup
         protected override IStageBuilder Configure(IRunInfo runInfo)
         {
             var builder = GetStageBuilder<TestModuleWithResult>(runInfo);
-            builder.Configure((ri, sp, md) => new(ri, sp, md)
-                {
+            builder.Configure((dl, ri, sp) => new(dl, ri, sp)
+            {
                     Name = Name + " " + 0,
                     IsEnabled = true,
                     MaxParallelChildren = MaxParallelChildren,
@@ -38,7 +38,7 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         private IStageBuilder CreateChildModule1(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            builder.Configure((ri, sp, md) => new(ri, sp, md)
+            builder.Configure((dl, ri, sp) => new(dl, ri, sp)
             {
                 Name = Name + " " + index,
                 IsEnabled = index != 0,
@@ -53,12 +53,15 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         private IStageBuilder CreateChildModule2(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            return builder.Configure((ri, sp, md) => new(ri, sp, md)
+            return builder.Configure((dl, ri, sp) => new(dl, ri, sp)
             {
                 Name = Name + " " + index,
                 IsEnabled = true,
                 MaxParallelChildren = MaxParallelChildren
             });
         }
+
+        protected override TestDataLayer CreateDataLayer() =>
+            new TestDataLayer();
     }
 }

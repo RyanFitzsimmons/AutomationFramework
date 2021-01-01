@@ -5,20 +5,20 @@ using System.Text;
 
 namespace AutomationFramework
 {
-    public abstract class Module<TDataLayer, TResult> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer where TResult : class
+    public abstract class Module<TResult> : ModuleBase where TResult : class
     {
-        protected Module(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        protected Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
 
         /// <summary>
-        /// Takes the stage module result and an IEnumerable of child stage modules
+        /// Takes the stage module result and the child stage module as input.
         /// The main use of this is for a module with a result to pass
         /// information onto its children.
         /// </summary>
-        public Action<TResult, IModule, IMetaData> ConfigureChildWithResult { get; set; }
+        public Action<TResult, IModule> ConfigureChildWithResult { get; init; }
 
-        public Func<IModule, IMetaData, TResult> Work { get; set; }
+        public Func<IModule, TResult> Work { get; init; }
 
         internal protected override void RunWork()
         {
@@ -44,14 +44,14 @@ namespace AutomationFramework
         protected virtual void OnRunFinish(TResult result) => SetStatusBase(StageStatuses.Completed);
 
         protected virtual TResult DoWork() => 
-            Work == null ? default : Work.Invoke(this, MetaData);
+            Work == null ? default : Work.Invoke(this);
 
         public override void InvokeConfigureChild(IModule child)
         {
             CheckForCancellation();
             var result = GetResult();
             if (result == default(TResult)) Log(LogLevels.Warning, $"{this} no result found");
-            else ConfigureChildWithResult?.Invoke(result, child, MetaData); 
+            else ConfigureChildWithResult?.Invoke(result, child); 
         }
 
         private TResult GetResult()
@@ -61,11 +61,11 @@ namespace AutomationFramework
                 case RunType.Standard:
                     return DataLayer.GetCurrentResult<TResult>(this);
                 case RunType.From:
-                    if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
+                    if (RunInfo.Path == Path || RunInfo.Path.IsDescendantOf(Path))
                         return DataLayer.GetCurrentResult<TResult>(this);
                     else return DataLayer.GetPreviousResult<TResult>(this);
                 case RunType.Single:
-                    if (RunInfo.Path == StagePath)
+                    if (RunInfo.Path == Path)
                         return DataLayer.GetCurrentResult<TResult>(this);
                     else return DataLayer.GetPreviousResult<TResult>(this);
                 default:

@@ -4,9 +4,9 @@ using System.Text;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestModule : Module<ModuleTestDataLayer>
+    public class TestModule : Module
     {
-        public TestModule(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        public TestModule(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
 

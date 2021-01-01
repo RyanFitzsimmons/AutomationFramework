@@ -7,19 +7,13 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class Module<TDataLayer> : ModuleBase<TDataLayer> where TDataLayer : IModuleDataLayer
+    public abstract class Module : ModuleBase 
     {
-        protected Module(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        protected Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
 
-        /// <summary>
-        /// Takes the child stage module and meta data as input.
-        /// The main use of this is for a module with a result to pass
-        /// information onto its children.
-        /// </summary>
-        public Action<IModule, IMetaData> ConfigureChild { get; set; }
-        public Action<IModule, IMetaData> Work { get; set; }
+        public Action<IModule> Work { get; init; }
 
         internal protected override void RunWork()
         {
@@ -49,11 +43,11 @@ namespace AutomationFramework
         }
 
         protected virtual void DoWork() =>
-            Work?.Invoke(this, MetaData);
+            Work?.Invoke(this);
 
         public override void InvokeConfigureChild(IModule child)
         {
-            ConfigureChild?.Invoke(child, MetaData);
+            // Only needed for module with result
         }
     }
 }

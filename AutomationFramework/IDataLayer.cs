@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public interface IKernelDataLayer
+    public interface IDataLayer
     {
         /// <summary>
         /// Should return a new instance every call
@@ -18,5 +18,13 @@ namespace AutomationFramework
         IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData);
         IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo);
         void CheckExistingJob(IRunInfo runInfo, string version);
+
+
+        void CreateStage(IModule module);
+        void SetStatus(IModule module, StageStatuses status);
+
+        void SaveResult<TResult>(IModule module, TResult result) where TResult : class;
+        TResult GetCurrentResult<TResult>(IModule module) where TResult : class;
+        TResult GetPreviousResult<TResult>(IModule module) where TResult : class;
     }
 }

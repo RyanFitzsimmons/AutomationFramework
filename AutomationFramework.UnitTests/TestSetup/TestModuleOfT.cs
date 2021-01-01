@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework.UnitTests.TestSetup
 {
-    public class TestModuleWithResult : Module<ModuleTestDataLayer, TestModuleResult>
+    public class TestModuleWithResult : Module<TestModuleResult>
     {
-        public TestModuleWithResult(IRunInfo runInfo, StagePath stagePath, IMetaData metaData) : base(runInfo, stagePath, metaData)
+        public TestModuleWithResult(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
 

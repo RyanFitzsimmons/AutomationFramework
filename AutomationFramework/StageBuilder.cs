@@ -9,34 +9,29 @@ namespace AutomationFramework
 {
     public class StageBuilder<TModule> : IStageBuilder where TModule : IModule
     {
-        public StageBuilder(IRunInfo runInfo, StagePath path, Func<IMetaData> getMetaData)
+        public StageBuilder(IDataLayer dataLayer, IRunInfo runInfo, StagePath path)
         {
+            DataLayer = dataLayer;
             RunInfo = runInfo;
             Path = path;
-            GetMetaData = getMetaData;
         }
 
+        private IDataLayer DataLayer { get; }
         private IRunInfo RunInfo { get; }
-
         private StagePath Path { get; }
-
-        private Func<IMetaData> GetMetaData { get; }
-
         private TModule Module { get; set; }
-
         private int ChildIndex { get; set; }
-
         private List<IStageBuilder> Builders { get; set; } = new List<IStageBuilder>();
 
-        public StageBuilder<TModule> Configure(Func<IRunInfo, StagePath, IMetaData, TModule> configureDelegate)
+        public StageBuilder<TModule> Configure(Func<IDataLayer, IRunInfo, StagePath, TModule> configureDelegate)
         {            
-            Module = configureDelegate.Invoke(RunInfo, Path, GetMetaData.Invoke());
+            Module = configureDelegate.Invoke(DataLayer, RunInfo, Path);
             return this;
         }
 
         public StageBuilder<TModule> Add<TChildModule>(Action<StageBuilder<TChildModule>> builderDelegate) where TChildModule : IModule
         {
-            var builder = new StageBuilder<TChildModule>(RunInfo, Path.CreateChild(++ChildIndex), GetMetaData);
+            var builder = new StageBuilder<TChildModule>(DataLayer, RunInfo, Path.CreateChild(++ChildIndex));
             builderDelegate.Invoke(builder);
             Builders.Add(builder);
             return this;

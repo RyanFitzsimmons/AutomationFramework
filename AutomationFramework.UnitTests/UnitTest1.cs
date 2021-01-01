@@ -71,7 +71,7 @@ namespace AutomationFramework.UnitTests
 
             foreach (TestModuleWithResult module in job.TestModules)
             {
-                switch (module.StagePath.ToString())
+                switch (module.Path.ToString())
                 {
                     case "1-2":
                         for (int j = 0; j < module.Actions.Count; j++)
@@ -97,7 +97,7 @@ namespace AutomationFramework.UnitTests
                                 case 5:
                                 case 6:
                                 case 7:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -125,7 +125,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -149,7 +149,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -174,7 +174,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -197,7 +197,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -217,7 +217,7 @@ namespace AutomationFramework.UnitTests
 
             foreach (TestModuleWithResult module in job.TestModules)
             {
-                switch (module.StagePath.ToString())
+                switch (module.Path.ToString())
                 {
                     case "1-2":
                     case "1-2-1":
@@ -246,7 +246,7 @@ namespace AutomationFramework.UnitTests
                                 case 5:
                                 case 6:
                                 case 7:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -272,7 +272,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -295,7 +295,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -320,7 +320,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -343,7 +343,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -363,7 +363,7 @@ namespace AutomationFramework.UnitTests
 
             foreach (TestModuleWithResult module in job.TestModules)
             {
-                switch (module.StagePath.ToString())
+                switch (module.Path.ToString())
                 {
                     case "1":
                     case "1-2":
@@ -397,7 +397,7 @@ namespace AutomationFramework.UnitTests
                                 case 5:
                                 case 6:
                                 case 7:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -423,7 +423,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (job.TestModules.Any(x => x.Path.IsChildOf(module.Path)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:

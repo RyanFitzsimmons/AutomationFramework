@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class KernelBase<TDataLayer> : IKernel where TDataLayer : IKernelDataLayer
+    public abstract class KernelBase<TDataLayer> : IKernel where TDataLayer : IDataLayer
     {
         public KernelBase(ILogger logger = null)
         {
             Logger = logger;
-            DataLayer = Activator.CreateInstance<TDataLayer>();
+            DataLayer = CreateDataLayer();
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
@@ -30,6 +30,8 @@ namespace AutomationFramework
         /// </summary>
         private IMetaData MetaData { get; set; }
 
+        protected abstract TDataLayer CreateDataLayer();
+
         /// <summary>
         /// This method should only be used when configuring the stage builder
         /// </summary>
@@ -39,7 +41,7 @@ namespace AutomationFramework
             MetaData as TMetaData;
 
         protected StageBuilder<TModule> GetStageBuilder<TModule>(IRunInfo runInfo) where TModule : IModule => 
-            new StageBuilder<TModule>(runInfo, StagePath.Root, () => DataLayer.GetMetaData(runInfo));
+            new StageBuilder<TModule>(DataLayer, runInfo, StagePath.Root);
 
         public void Run(IRunInfo runInfo, IMetaData metaData)
         {
@@ -67,18 +69,18 @@ namespace AutomationFramework
         {
             var builder = Configure(runInfo);
             Stages = builder.Build();
-            foreach (var stage in Stages.OrderBy(x => x.Key))
+            foreach (var stage in Stages.OrderBy(x => x.Key).Select(x => x.Value))
             {
                 var metaData = DataLayer.GetMetaData(runInfo);
-                PreStageBuild(stage.Value, metaData);
-                stage.Value.OnLog += Stage_OnLog;
-                stage.Value.Build();
-                PostStageBuild(stage.Value, metaData);
+                PreStageBuild(stage, metaData);
+                stage.OnLog += Stage_OnLog;
+                (stage as ModuleBase).Build();
+                PostStageBuild(stage, metaData);
             }
         }
 
         private void Stage_OnLog(IModule stage, LogLevels level, object message) => 
-            Logger?.Write(level, stage.StagePath, message);
+            Logger?.Write(level, stage.Path, message);
 
         protected virtual void PreStageBuild(IModule stage, IMetaData metaData) { }
 
@@ -96,7 +98,7 @@ namespace AutomationFramework
                 foreach (var pathToCancel in GetPathAndDescendantsOf(path))
                 {
                     Stages.TryGetValue(pathToCancel, out IModule stage);
-                    stage.Cancel();
+                    (stage as ModuleBase).Cancel();
                 }
             }
             catch (Exception ex)
@@ -113,7 +115,7 @@ namespace AutomationFramework
         {
             try
             {
-                stage.Run();
+                (stage as ModuleBase).Run();
                 RunChildren(path, stage);
             }
             catch (OperationCanceledException)
@@ -130,8 +132,8 @@ namespace AutomationFramework
         {
             return Task.Factory.StartNew(() =>
                 {
-                    stage.Run();
-                }, stage.GetCancellationToken())
+                    (stage as ModuleBase).Run();
+                }, (stage as ModuleBase).GetCancellationToken())
                 .ContinueWith((t) =>
                 {
                     switch (t.Status)
@@ -169,7 +171,7 @@ namespace AutomationFramework
             foreach (var childPath in GetChildPaths(path))
             {
                 var child = GetStage(childPath);
-                stage.InvokeConfigureChild(child);
+                (stage as ModuleBase).InvokeConfigureChild(child);
 
                 if (stage.MaxParallelChildren == 1)
                 {
@@ -187,7 +189,7 @@ namespace AutomationFramework
         }
 
         /// <summary>
-        /// Takes the run info, validates it and returns it with a job id if none existed.
+        /// Takes the run info, validates it and returns it with a job and request id if none existed.
         /// </summary>
         /// <param name="runInfo"></param>
         /// <returns>The updated run info</returns>

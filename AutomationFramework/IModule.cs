@@ -13,14 +13,8 @@ namespace AutomationFramework
         string Name { get; init; }
         bool IsEnabled { get; init; }
         IRunInfo RunInfo { get; }
-        StagePath StagePath { get; }
+        StagePath Path { get; }
 
         event Action<IModule, LogLevels, object> OnLog;
-
-        CancellationToken GetCancellationToken();
-        void Build();
-        void Run();
-        void Cancel();
-        void InvokeConfigureChild(IModule child);
     }
 }

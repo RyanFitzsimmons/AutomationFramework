@@ -11,23 +11,23 @@ namespace AutomationFramework
     /// Modules are not thread safe and because of this no variables should be 
     /// accessed from outside the module while the stage is in progress.
     /// </summary>
-    /// <typeparam name="TDataLayer">The module data layer</typeparam>
-    public abstract class ModuleBase<TDataLayer> : IModule where TDataLayer : IModuleDataLayer
+    public abstract class ModuleBase : IModule
     {
-        public ModuleBase(IRunInfo runInfo, StagePath stagePath, IMetaData metaData)
+        public ModuleBase(IDataLayer dataLayer, IRunInfo runInfo, StagePath path)
         {
             RunInfo = runInfo;
-            StagePath = stagePath;
-            MetaData = metaData;
-            DataLayer = Activator.CreateInstance<TDataLayer>();
+            Path = path;            
+            DataLayer = dataLayer;
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
+        private IMetaData _MetaData;
 
         public IRunInfo RunInfo { get; }
-        public StagePath StagePath { get; }
-        protected internal IMetaData MetaData { get; }
-        protected TDataLayer DataLayer { get; }
+        public StagePath Path { get; }
+        protected IDataLayer DataLayer { get; }
+
+        private IMetaData MetaData => _MetaData ??= DataLayer.GetMetaData(RunInfo);
 
         /// <summary>
         /// Is enabled by default
@@ -124,8 +124,8 @@ namespace AutomationFramework
             RunInfo.Type switch
             {
                 RunType.Standard => true,
-                RunType.From => StagePath == RunInfo.Path || StagePath.IsDescendantOf(RunInfo.Path),
-                RunType.Single => StagePath == RunInfo.Path,
+                RunType.From => Path == RunInfo.Path || Path.IsDescendantOf(RunInfo.Path),
+                RunType.Single => Path == RunInfo.Path,
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
@@ -151,7 +151,7 @@ namespace AutomationFramework
 
         public override string ToString()
         {
-            return StagePath.ToString() + " - " + Name;
+            return Path.ToString() + " - " + Name;
         }
     }
 }
