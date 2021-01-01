@@ -23,7 +23,7 @@ namespace AutomationFramework
         private bool HasRunBeenCalled { get; set; }
         private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
 
-        private TDataLayer DataLayer { get; }
+        protected TDataLayer DataLayer { get; }
 
         /// <summary>
         /// Stores the meta data for GetMetaData method
