@@ -6,7 +6,7 @@ namespace AutomationFramework.UnitTests.TestSetup
 {
     public class TestKernel : KernelBase<TestDataLayer>
     {
-        public TestKernel(int maxParallelChildren, ILogger logger = null) : base(logger)
+        public TestKernel(int maxParallelChildren, TestDataLayer dataLayer, ILogger logger = null) : base(dataLayer, logger)
         {
             MaxParallelChildren = maxParallelChildren;
         }
@@ -60,8 +60,5 @@ namespace AutomationFramework.UnitTests.TestSetup
                 MaxParallelChildren = MaxParallelChildren
             });
         }
-
-        protected override TestDataLayer CreateDataLayer() =>
-            new TestDataLayer();
     }
 }

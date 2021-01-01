@@ -9,10 +9,10 @@ namespace AutomationFramework
 {
     public abstract class KernelBase<TDataLayer> : IKernel where TDataLayer : IDataLayer
     {
-        public KernelBase(ILogger logger = null)
+        public KernelBase(TDataLayer dataLayer, ILogger logger = null)
         {
+            DataLayer = dataLayer;
             Logger = logger;
-            DataLayer = CreateDataLayer();
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
@@ -29,8 +29,6 @@ namespace AutomationFramework
         /// Stores the meta data for GetMetaData method
         /// </summary>
         private IMetaData MetaData { get; set; }
-
-        protected abstract TDataLayer CreateDataLayer();
 
         /// <summary>
         /// This method should only be used when configuring the stage builder

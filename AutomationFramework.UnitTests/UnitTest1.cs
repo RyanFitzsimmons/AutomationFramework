@@ -20,7 +20,7 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void Run()
         {
-            var job = new TestKernel(1, new TestLogger());
+            var job = new TestKernel(1, new TestDataLayer(), new TestLogger());
             job.Run(RunInfo<string>.Empty, new TestMetaData());
             RunResults(job);
         }
@@ -28,7 +28,7 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void RunParallel()
         {
-            var job = new TestKernel(3, new TestLogger());
+            var job = new TestKernel(3, new TestDataLayer(), new TestLogger());
             job.Run(RunInfo<string>.Empty, new TestMetaData());
             RunResults(job);
         }
@@ -36,7 +36,7 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void RunSingle()
         {
-            var job = new TestKernel(1, new TestLogger());
+            var job = new TestKernel(1, new TestDataLayer(), new TestLogger());
             job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunSingleResults(job);
         }
@@ -44,7 +44,7 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void RunSingleParallel()
         {
-            var job = new TestKernel(3, new TestLogger());
+            var job = new TestKernel(3, new TestDataLayer(), new TestLogger());
             job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunSingleResults(job);
         }
@@ -52,7 +52,7 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void RunFrom()
         {
-            var job = new TestKernel(1, new TestLogger());
+            var job = new TestKernel(1, new TestDataLayer(), new TestLogger());
             job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunFromResults(job);
         }
@@ -60,7 +60,7 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void RunFromParallel()
         {
-            var job = new TestKernel(3, new TestLogger());
+            var job = new TestKernel(3, new TestDataLayer(), new TestLogger());
             job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunFromResults(job);
         }
