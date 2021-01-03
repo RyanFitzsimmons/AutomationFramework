@@ -5,11 +5,13 @@ using System.Text;
 
 namespace AutomationFramework
 {
-    public abstract class Module<TResult> : ModuleBase where TResult : class
+    public class Module<TResult> : ModuleBase where TResult : class
     {
         protected Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
+
+        public override string Name { get; init; } = "Default Module With Result";
 
         /// <summary>
         /// Takes the stage module result and the child stage module as input.

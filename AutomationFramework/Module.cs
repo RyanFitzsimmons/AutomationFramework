@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    public abstract class Module : ModuleBase 
+    public class Module : ModuleBase 
     {
         protected Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
 
         public Action<IModule> Work { get; init; }
+        public override string Name { get; init; } = "Default Module";
 
         internal protected override void RunWork()
         {
