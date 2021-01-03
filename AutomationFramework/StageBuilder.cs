@@ -29,6 +29,13 @@ namespace AutomationFramework
             return this;
         }
 
+        public StageBuilder<TModule> ForEach<TType>(IEnumerable<TType> collection, Action<StageBuilder<TModule>, TType> foreachDelegate)
+        {
+            foreach (var item in collection)
+                foreachDelegate.Invoke(this, item);
+            return this;
+        }
+
         public StageBuilder<TModule> Add<TChildModule>(Action<StageBuilder<TChildModule>> builderDelegate) where TChildModule : IModule
         {
             var builder = new StageBuilder<TChildModule>(DataLayer, RunInfo, Path.CreateChild(++ChildIndex));
