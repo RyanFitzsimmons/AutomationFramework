@@ -7,7 +7,7 @@ namespace AutomationFramework
 {
     public class Module<TResult> : ModuleBase where TResult : class
     {
-        protected Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
+        public Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
         {
         }
 
