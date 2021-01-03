@@ -14,11 +14,16 @@ namespace AutomationFramework
         /// <param name="runInfo">The run info</param>
         /// <returns>A unique copy of the meta data</returns>
         IMetaData GetMetaData(IRunInfo runInfo);
-        IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo);
-        IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData);
-        IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo);
-        void CheckExistingJob(IRunInfo runInfo, string version);
-
+        /// <summary>
+        /// Should create a job and return the Id if none exists or
+        /// return the existing job Id if one does.
+        /// </summary>
+        /// <param name="kernel">The kernel</param>
+        /// <param name="runInfo">The runInfo</param>
+        /// <param name="metaData">The metaData of the job</param>
+        /// <returns>The runInfo with the potentially updated job Id</returns>
+        IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo, IMetaData metaData);
+        IRunInfo CreateRequest(IRunInfo runInfo);
 
         void CreateStage(IModule module);
         void SetStatus(IModule module, StageStatuses status);

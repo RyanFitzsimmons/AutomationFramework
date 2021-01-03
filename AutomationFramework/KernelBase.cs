@@ -197,9 +197,9 @@ namespace AutomationFramework
             HasRunBeenCalled = true;
 
             ValidateRunInfo(runInfo);
-            MetaData = metaData;
-            runInfo = DataLayer.GetJobId(this, runInfo);
-            runInfo = DataLayer.CreateRequest(runInfo, metaData);
+            runInfo = DataLayer.GetJobId(this, runInfo, metaData);
+            runInfo = DataLayer.CreateRequest(runInfo);
+            MetaData = DataLayer.GetMetaData(runInfo);
             return runInfo;
         }
 

@@ -13,21 +13,21 @@ namespace AutomationFramework.UnitTests.TestSetup
             //throw new NotSupportedException("Data layer is for Run type only");
         }
 
-        public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo)
+        public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo, IMetaData metaData)
         {
             return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path);
         }
 
-        public IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData)
+        public IRunInfo CreateRequest(IRunInfo runInfo)
         {
             return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
         }
 
-        public IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo)
+        public IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo, IMetaData metaData)
         {
             if (string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId))
             {
-                return CreateJob(kernel, runInfo);
+                return CreateJob(kernel, runInfo, metaData);
             }
             else
             {

@@ -47,18 +47,25 @@ namespace AutomationFramework
         public ConcurrentDictionary<StagePath, IModule> Build()
         {
             var stages = new ConcurrentDictionary<StagePath, IModule>();
-            stages.TryAdd(Path, Module);
-            foreach (var builder in Builders)
-                foreach (var pair in builder.Build())
-                    stages.TryAdd(pair.Key, pair.Value);
+            if (Module != null)
+            {
+                stages.TryAdd(Path, Module);
+                foreach (var builder in Builders)
+                    foreach (var pair in builder.Build())
+                        stages.TryAdd(pair.Key, pair.Value);
+            }
             return stages;
         }
 
         public IModule[] BuildToArray()
         {
-            List<IModule> modules = new (){ Module };
-            foreach (var builder in Builders)
-                modules.AddRange(builder.BuildToArray());
+            List<IModule> modules = new ();
+            if (Module != null)
+            {
+                modules.Add(Module);
+                foreach (var builder in Builders)
+                    modules.AddRange(builder.BuildToArray());
+            }
             return modules.ToArray();
         }
     }
