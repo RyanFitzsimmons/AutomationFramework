@@ -13,10 +13,10 @@ namespace AutomationFramework
     /// </summary>
     public abstract class ModuleBase : IModule
     {
-        public ModuleBase(IDataLayer dataLayer, IRunInfo runInfo, StagePath path)
+        public ModuleBase(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath)
         {
             RunInfo = runInfo;
-            Path = path;            
+            StagePath = stagePath;            
             DataLayer = dataLayer;
         }
 
@@ -24,7 +24,7 @@ namespace AutomationFramework
         private IMetaData _MetaData;
 
         public IRunInfo RunInfo { get; }
-        public StagePath Path { get; }
+        public StagePath StagePath { get; }
         protected IDataLayer DataLayer { get; }
 
         private IMetaData MetaData => _MetaData ??= DataLayer.GetMetaData(RunInfo);
@@ -124,8 +124,8 @@ namespace AutomationFramework
             RunInfo.Type switch
             {
                 RunType.Standard => true,
-                RunType.From => Path == RunInfo.Path || Path.IsDescendantOf(RunInfo.Path),
-                RunType.Single => Path == RunInfo.Path,
+                RunType.From => StagePath == RunInfo.Path || StagePath.IsDescendantOf(RunInfo.Path),
+                RunType.Single => StagePath == RunInfo.Path,
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
@@ -151,7 +151,7 @@ namespace AutomationFramework
 
         public override string ToString()
         {
-            return Path.ToString() + " - " + Name;
+            return StagePath.ToString() + " - " + Name;
         }
     }
 }

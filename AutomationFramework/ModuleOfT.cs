@@ -63,11 +63,11 @@ namespace AutomationFramework
                 case RunType.Standard:
                     return DataLayer.GetCurrentResult<TResult>(this);
                 case RunType.From:
-                    if (RunInfo.Path == Path || RunInfo.Path.IsDescendantOf(Path))
+                    if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
                         return DataLayer.GetCurrentResult<TResult>(this);
                     else return DataLayer.GetPreviousResult<TResult>(this);
                 case RunType.Single:
-                    if (RunInfo.Path == Path)
+                    if (RunInfo.Path == StagePath)
                         return DataLayer.GetCurrentResult<TResult>(this);
                     else return DataLayer.GetPreviousResult<TResult>(this);
                 default:

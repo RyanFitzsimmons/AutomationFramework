@@ -30,31 +30,47 @@ namespace AutomationFramework
         /// </summary>
         private IMetaData MetaData { get; set; }
 
+        private IRunInfo RunInfo { get; set; }
+
+        private bool HasStarted { get; set; }
+
         /// <summary>
         /// This method should only be used when configuring the stage builder
         /// </summary>
         /// <typeparam name="TMetaData"></typeparam>
         /// <returns>Meta data</returns>
-        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData => 
-            MetaData as TMetaData;
+        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
+        {
+            if (HasStarted) throw new Exception("This method should not be called once processing has started");
+            return MetaData as TMetaData;
+        }
 
-        protected StageBuilder<TModule> GetStageBuilder<TModule>(IRunInfo runInfo) where TModule : IModule => 
-            new StageBuilder<TModule>(DataLayer, runInfo, StagePath.Root);
+        protected RunInfo<TId> GetRunInfo<TId>()
+        {
+            if (HasStarted) throw new Exception("This method should not be called once processing has started");
+            return RunInfo as RunInfo<TId>;
+        }
+
+        protected StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule => 
+            new StageBuilder<TModule>(DataLayer, RunInfo, StagePath.Root);
 
         public void Run(IRunInfo runInfo, IMetaData metaData)
         {
             try
             {
                 Logger?.Write(LogLevels.Information, $"{Name} Started");
-                runInfo = Initialize(runInfo, metaData);
-                BuildStages(runInfo);
+                RunInfo = Initialize(runInfo, metaData);
+                BuildStages();
                 if (runInfo.Type != RunType.Build)
+                {
+                    HasStarted = true;
                     RunStage(StagePath.Root, GetStage(StagePath.Root));
+                }
                 Logger?.Write(LogLevels.Information, $"{Name} Finished");
             }
             catch (OperationCanceledException)
             {
-                Logger?.Write(LogLevels.Warning, $"{Name} Canceled");
+                Logger?.Write(LogLevels.Warning, $"{Name} Cancelled");
             }
             catch (Exception ex)
             {
@@ -63,13 +79,13 @@ namespace AutomationFramework
             }
         }
 
-        private void BuildStages(IRunInfo runInfo)
+        private void BuildStages()
         {
-            var builder = Configure(runInfo);
+            var builder = Configure();
             Stages = builder.Build();
             foreach (var stage in Stages.OrderBy(x => x.Key).Select(x => x.Value))
             {
-                var metaData = DataLayer.GetMetaData(runInfo);
+                var metaData = DataLayer.GetMetaData(RunInfo);
                 PreStageBuild(stage, metaData);
                 stage.OnLog += Stage_OnLog;
                 (stage as ModuleBase).Build();
@@ -78,7 +94,7 @@ namespace AutomationFramework
         }
 
         private void Stage_OnLog(IModule stage, LogLevels level, object message) => 
-            Logger?.Write(level, stage.Path, message);
+            Logger?.Write(level, stage.StagePath, message);
 
         protected virtual void PreStageBuild(IModule stage, IMetaData metaData) { }
 
@@ -207,7 +223,7 @@ namespace AutomationFramework
         /// Creates the stages - Called at the start of the run method
         /// </summary>
         /// <returns>The root stage builder</returns>
-        protected abstract IStageBuilder Configure(IRunInfo runInfo);
+        protected abstract IStageBuilder Configure();
 
         /// <summary>
         /// Performs validation on the RunInfo

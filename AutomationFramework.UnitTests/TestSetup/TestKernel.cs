@@ -19,9 +19,9 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         public List<IModule> TestModules { get; private set; } = new List<IModule>();
 
-        protected override IStageBuilder Configure(IRunInfo runInfo)
+        protected override IStageBuilder Configure()
         {
-            var builder = GetStageBuilder<TestModuleWithResult>(runInfo);
+            var builder = GetStageBuilder<TestModuleWithResult>();
             builder.Configure((dl, ri, sp) => new(dl, ri, sp)
             {
                     Name = Name + " " + 0,
