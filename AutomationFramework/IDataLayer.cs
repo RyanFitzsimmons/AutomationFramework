@@ -9,12 +9,6 @@ namespace AutomationFramework
     public interface IDataLayer
     {
         /// <summary>
-        /// Should return a new instance every call
-        /// </summary>
-        /// <param name="runInfo">The run info</param>
-        /// <returns>A unique copy of the meta data</returns>
-        IMetaData GetMetaData(IRunInfo runInfo);
-        /// <summary>
         /// Should create a job and return the Id if none exists or
         /// return the existing job Id if one does.
         /// </summary>

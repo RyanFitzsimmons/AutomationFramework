@@ -46,7 +46,7 @@ namespace AutomationFramework
         protected virtual void DoWork() =>
             Work?.Invoke(this);
 
-        public override void InvokeConfigureChild(IModule child)
+        internal override void InvokeConfigureChild(IModule child)
         {
             // Only needed for module with result
         }

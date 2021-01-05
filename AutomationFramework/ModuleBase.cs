@@ -21,13 +21,10 @@ namespace AutomationFramework
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
-        private IMetaData _MetaData;
 
         public IRunInfo RunInfo { get; }
         public StagePath StagePath { get; }
         protected IDataLayer DataLayer { get; }
-
-        private IMetaData MetaData => _MetaData ??= DataLayer.GetMetaData(RunInfo);
 
         /// <summary>
         /// Is enabled by default
@@ -44,9 +41,9 @@ namespace AutomationFramework
         public virtual int MaxParallelChildren { get; init; } = 1;
 
         public event Action<IModule, LogLevels, object> OnLog;
-        public event Action<IModule, IMetaData> OnBuild;
-        public event Action<IModule, IMetaData> OnCompletion;
-        public event Action<IModule, IMetaData> OnCancellation;
+        public event Action<IModule> OnBuild;
+        public event Action<IModule> OnCompletion;
+        public event Action<IModule> OnCancellation;
         /// <summary>
         /// Be aware this is called from the kernel thread
         /// </summary>
@@ -54,18 +51,13 @@ namespace AutomationFramework
 
         protected virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
-        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
-        {
-            return MetaData as TMetaData;
-        }
-
         public void Build()
         {
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
                 DataLayer.CreateStage(this);
-                OnBuild?.Invoke(this, MetaData);
+                OnBuild?.Invoke(this);
             }
             catch (Exception ex)
             {
@@ -108,7 +100,7 @@ namespace AutomationFramework
             }
             finally
             {
-                OnCompletion?.Invoke(this, MetaData);
+                OnCompletion?.Invoke(this);
             }
         }
 
@@ -129,7 +121,7 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
-        public abstract void InvokeConfigureChild(IModule child);
+        internal abstract void InvokeConfigureChild(IModule child);
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 
@@ -144,7 +136,7 @@ namespace AutomationFramework
             var token = GetCancellationToken();
             if (token.IsCancellationRequested)
             {
-                OnCancellation?.Invoke(this, MetaData);
+                OnCancellation?.Invoke(this);
                 token.ThrowIfCancellationRequested();
             }
         }

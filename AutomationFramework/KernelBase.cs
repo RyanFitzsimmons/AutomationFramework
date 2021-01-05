@@ -9,30 +9,27 @@ namespace AutomationFramework
 {
     public abstract class KernelBase<TDataLayer> : IKernel where TDataLayer : IDataLayer
     {
+        private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
+
         public KernelBase(TDataLayer dataLayer, ILogger logger = null)
         {
             DataLayer = dataLayer;
             Logger = logger;
         }
 
-        private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
-
-        protected ILogger Logger { get; }
         public abstract string Version { get; }
         public abstract string Name { get; }
-        private bool HasRunBeenCalled { get; set; }
-        private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
-
+        protected ILogger Logger { get; }
         protected TDataLayer DataLayer { get; }
 
         /// <summary>
         /// Stores the meta data for GetMetaData method
         /// </summary>
         private IMetaData MetaData { get; set; }
-
         private IRunInfo RunInfo { get; set; }
-
         private bool HasStarted { get; set; }
+        private bool HasRunBeenCalled { get; set; }
+        private ConcurrentDictionary<StagePath, IModule> Stages { get; set; }
 
         /// <summary>
         /// This method should only be used when configuring the stage builder
@@ -59,7 +56,8 @@ namespace AutomationFramework
             try
             {
                 Logger?.Write(LogLevels.Information, $"{Name} Started");
-                RunInfo = Initialize(runInfo, metaData);
+                MetaData = metaData;
+                RunInfo = Initialize(runInfo);
                 BuildStages();
                 if (runInfo.Type != RunType.Build)
                 {
@@ -85,20 +83,19 @@ namespace AutomationFramework
             Stages = builder.Build();
             foreach (var stage in Stages.OrderBy(x => x.Key).Select(x => x.Value))
             {
-                var metaData = DataLayer.GetMetaData(RunInfo);
-                PreStageBuild(stage, metaData);
+                PreStageBuild(stage);
                 stage.OnLog += Stage_OnLog;
                 (stage as ModuleBase).Build();
-                PostStageBuild(stage, metaData);
+                PostStageBuild(stage);
             }
         }
 
         private void Stage_OnLog(IModule stage, LogLevels level, object message) => 
             Logger?.Write(level, stage.StagePath, message);
 
-        protected virtual void PreStageBuild(IModule stage, IMetaData metaData) { }
+        protected virtual void PreStageBuild(IModule stage) { }
 
-        protected virtual void PostStageBuild(IModule stage, IMetaData metaData) { }
+        protected virtual void PostStageBuild(IModule stage) { }
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 
@@ -207,15 +204,14 @@ namespace AutomationFramework
         /// </summary>
         /// <param name="runInfo"></param>
         /// <returns>The updated run info</returns>
-        private IRunInfo Initialize(IRunInfo runInfo, IMetaData metaData)
+        private IRunInfo Initialize(IRunInfo runInfo)
         {
             if (HasRunBeenCalled) throw new Exception("A job instance can only be run once");
             HasRunBeenCalled = true;
 
             ValidateRunInfo(runInfo);
-            runInfo = DataLayer.GetJobId(this, runInfo, metaData);
+            runInfo = DataLayer.GetJobId(this, runInfo, MetaData);
             runInfo = DataLayer.CreateRequest(runInfo);
-            MetaData = DataLayer.GetMetaData(runInfo);
             return runInfo;
         }
 

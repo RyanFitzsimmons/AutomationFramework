@@ -48,7 +48,7 @@ namespace AutomationFramework
         protected virtual TResult DoWork() => 
             Work == null ? default : Work.Invoke(this);
 
-        public override void InvokeConfigureChild(IModule child)
+        internal override void InvokeConfigureChild(IModule child)
         {
             CheckForCancellation();
             var result = GetResult();
