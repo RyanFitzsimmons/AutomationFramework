@@ -79,6 +79,7 @@ namespace AutomationFramework
 
         private void BuildStages()
         {
+            Logger?.Write(LogLevels.Information, "Building stages");
             var builder = Configure();
             Stages = builder.Build();
             foreach (var stage in Stages.OrderBy(x => x.Key).Select(x => x.Value))
