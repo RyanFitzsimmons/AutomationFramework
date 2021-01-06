@@ -182,17 +182,18 @@ namespace AutomationFramework
             foreach (var childPath in GetChildPaths(path))
             {
                 var child = GetStage(childPath);
-                (stage as ModuleBase).InvokeConfigureChild(child);
-
-                if (stage.MaxParallelChildren == 1)
+                if ((stage as ModuleBase).InvokeConfigureChild(child))
                 {
-                    RunStage(childPath, child);
-                }
-                else
-                {
-                    tasks.Add(RunStageInParallel(childPath.Clone(), child));
-                    if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
-                        tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
+                    if (stage.MaxParallelChildren == 1)
+                    {
+                        RunStage(childPath, child);
+                    }
+                    else
+                    {
+                        tasks.Add(RunStageInParallel(childPath.Clone(), child));
+                        if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
+                            tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
+                    }
                 }
             }
 

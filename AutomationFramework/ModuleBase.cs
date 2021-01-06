@@ -121,7 +121,7 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
-        internal abstract void InvokeConfigureChild(IModule child);
+        internal abstract bool InvokeConfigureChild(IModule child);
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 

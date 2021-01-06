@@ -42,7 +42,8 @@ namespace AutomationFramework.UnitTests.TestSetup
             {
                 Name = Name + " " + index,
                 IsEnabled = index != 0,
-                MaxParallelChildren = MaxParallelChildren
+                MaxParallelChildren = MaxParallelChildren,
+                ConfigureChildWithResult = (r, c) => false,
             });
 
             for (int i = 0; i < 3; i++)

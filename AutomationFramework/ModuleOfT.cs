@@ -18,7 +18,7 @@ namespace AutomationFramework
         /// The main use of this is for a module with a result to pass
         /// information onto its children.
         /// </summary>
-        public Action<TResult, IModule> ConfigureChildWithResult { get; init; }
+        public Func<TResult, IModule, bool> ConfigureChildWithResult { get; init; }
 
         public Func<IModule, TResult> Work { get; init; }
 
@@ -48,12 +48,19 @@ namespace AutomationFramework
         protected virtual TResult DoWork() => 
             Work == null ? default : Work.Invoke(this);
 
-        internal override void InvokeConfigureChild(IModule child)
+        internal override bool InvokeConfigureChild(IModule child)
         {
             CheckForCancellation();
             var result = GetResult();
-            if (result == default(TResult)) Log(LogLevels.Warning, $"{this} no result found");
-            else ConfigureChildWithResult?.Invoke(result, child); 
+            if (result == default(TResult))
+            {
+                Log(LogLevels.Warning, $"{this} no result found");
+                return false;
+            }
+            else
+            {
+                return ConfigureChildWithResult?.Invoke(result, child) ?? true;
+            }
         }
 
         private TResult GetResult()
