@@ -27,7 +27,6 @@ namespace AutomationFramework
         /// </summary>
         private IMetaData MetaData { get; set; }
         private IRunInfo RunInfo { get; set; }
-        private bool HasStarted { get; set; }
         private bool HasRunBeenCalled { get; set; }
         private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
             = new ConcurrentDictionary<StagePath, IModule>();               
@@ -37,17 +36,10 @@ namespace AutomationFramework
         /// </summary>
         /// <typeparam name="TMetaData"></typeparam>
         /// <returns>Meta data</returns>
-        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData
-        {
-            if (HasStarted) throw new Exception("This method should not be called once processing has started");
-            return MetaData as TMetaData;
-        }
+        protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData =>
+            MetaData as TMetaData;
 
-        protected RunInfo<TId> GetRunInfo<TId>()
-        {
-            if (HasStarted) throw new Exception("This method should not be called once processing has started");
-            return RunInfo as RunInfo<TId>;
-        }
+        protected RunInfo<TId> GetRunInfo<TId>() => RunInfo as RunInfo<TId>;
 
         protected StageBuilder<TModule> GetStageBuilder<TModule>() where TModule : IModule => 
             new StageBuilder<TModule>(DataLayer, RunInfo, StagePath.Root);
@@ -61,10 +53,7 @@ namespace AutomationFramework
                 RunInfo = Initialize(runInfo);
                 BuildInitialStages();
                 if (runInfo.Type != RunType.Build)
-                {
-                    HasStarted = true;
                     RunStage(StagePath.Root, GetStage(StagePath.Root));
-                }
                 Logger?.Write(LogLevels.Information, $"{Name} Finished");
             }
             catch (OperationCanceledException)
