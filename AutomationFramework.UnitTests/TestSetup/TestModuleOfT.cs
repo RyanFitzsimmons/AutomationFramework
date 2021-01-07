@@ -8,7 +8,7 @@ namespace AutomationFramework.UnitTests.TestSetup
 {
     public class TestModuleWithResult : Module<TestModuleResult>
     {
-        public TestModuleWithResult(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
+        public TestModuleWithResult(IStageBuilder builder) : base(builder)
         {
         }
 

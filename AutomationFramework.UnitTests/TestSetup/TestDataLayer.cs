@@ -8,6 +8,8 @@ namespace AutomationFramework.UnitTests.TestSetup
 {
     public class TestDataLayer : IDataLayer
     {
+        public List<IModule> TestModules { get; private set; } = new List<IModule>();
+
         public void CheckExistingJob(IRunInfo runInfo, string version)
         {
             //throw new NotSupportedException("Data layer is for Run type only");
@@ -43,6 +45,7 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         public void CreateStage(IModule module)
         {
+            TestModules.Add(module);
             string action = "Create Stage";
             (module as TestModuleWithResult).Actions.Add(action);
         }

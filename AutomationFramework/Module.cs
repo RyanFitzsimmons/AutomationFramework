@@ -9,10 +9,11 @@ namespace AutomationFramework
 {
     public class Module : ModuleBase 
     {
-        public Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
+        public Module(IStageBuilder builder) : base(builder)
         {
         }
 
+        public Action<IStageBuilder> CreateChildren { get; init; }
         public Action<IModule> Work { get; init; }
         public override string Name { get; init; } = "Default Module";
 
@@ -46,10 +47,11 @@ namespace AutomationFramework
         protected virtual void DoWork() =>
             Work?.Invoke(this);
 
-        internal override bool InvokeConfigureChild(IModule child)
+        internal override IModule[] InvokeCreateChildren()
         {
-            // Only needed for module with result
-            return true;
+            CheckForCancellation();
+            CreateChildren?.Invoke(Builder);
+            return Builder.Build();
         }
     }
 }

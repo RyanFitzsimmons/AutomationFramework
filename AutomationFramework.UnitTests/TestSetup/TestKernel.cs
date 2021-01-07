@@ -12,17 +12,13 @@ namespace AutomationFramework.UnitTests.TestSetup
         }
 
         public override string Name => "Test Job";
-
         public override string Version => "";
-
         private int MaxParallelChildren { get; }
-
-        public List<IModule> TestModules { get; private set; } = new List<IModule>();
 
         protected override IStageBuilder Configure()
         {
             var builder = GetStageBuilder<TestModuleWithResult>();
-            builder.Configure((dl, ri, sp) => new(dl, ri, sp)
+            builder.Configure((b) => new(b)
             {
                     Name = Name + " " + 0,
                     IsEnabled = true,
@@ -32,18 +28,17 @@ namespace AutomationFramework.UnitTests.TestSetup
             for (int i = 0; i < 3; i++)
                 builder.Add<TestModuleWithResult>((b) => CreateChildModule1(b, i));
 
-            TestModules.AddRange(builder.BuildToArray());
             return builder;
         }
-
+        
         private IStageBuilder CreateChildModule1(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            builder.Configure((dl, ri, sp) => new(dl, ri, sp)
+            builder.Configure((b) => new(b)
             {
                 Name = Name + " " + index,
                 IsEnabled = index != 0,
                 MaxParallelChildren = MaxParallelChildren,
-                ConfigureChildWithResult = (r, c) => false,
+                CreateChildren = (b, r) => b.Add<TestModuleWithResult>((b) => CreateChildModule2(b, 99)),
             });
 
             for (int i = 0; i < 3; i++)
@@ -54,7 +49,7 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         private IStageBuilder CreateChildModule2(StageBuilder<TestModuleWithResult> builder, int index)
         {
-            return builder.Configure((dl, ri, sp) => new(dl, ri, sp)
+            return builder.Configure((b) => new(b)
             {
                 Name = Name + " " + index,
                 IsEnabled = true,

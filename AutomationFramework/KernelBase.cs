@@ -29,7 +29,8 @@ namespace AutomationFramework
         private IRunInfo RunInfo { get; set; }
         private bool HasStarted { get; set; }
         private bool HasRunBeenCalled { get; set; }
-        private ConcurrentDictionary<StagePath, IModule> Stages { get; set; }
+        private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
+            = new ConcurrentDictionary<StagePath, IModule>();               
 
         /// <summary>
         /// This method should only be used when configuring the stage builder
@@ -58,7 +59,7 @@ namespace AutomationFramework
                 Logger?.Write(LogLevels.Information, $"{Name} Started");
                 MetaData = metaData;
                 RunInfo = Initialize(runInfo);
-                BuildStages();
+                BuildInitialStages();
                 if (runInfo.Type != RunType.Build)
                 {
                     HasStarted = true;
@@ -77,17 +78,29 @@ namespace AutomationFramework
             }
         }
 
-        private void BuildStages()
+        private void BuildInitialStages()
         {
-            Logger?.Write(LogLevels.Information, "Building stages");
+            Logger?.Write(LogLevels.Information, "Building initial stages");
             var builder = Configure();
-            Stages = builder.Build();
-            foreach (var stage in Stages.OrderBy(x => x.Key).Select(x => x.Value))
+            foreach (var stage in builder.Build())
+            {
+                Stages.TryAdd(stage.StagePath, stage);
+                BuildStage(stage);
+            }
+        }
+
+        private void BuildStage(IModule stage)
+        {
+            try
             {
                 PreStageBuild(stage);
                 stage.OnLog += Stage_OnLog;
                 (stage as ModuleBase).Build();
                 PostStageBuild(stage);
+            }
+            catch (Exception ex)
+            {
+                Logger?.Write(LogLevels.Error, stage.StagePath, $"Stage {stage} faulted during build: {ex}");
             }
         }
 
@@ -123,11 +136,28 @@ namespace AutomationFramework
         private StagePath[] GetPathAndDescendantsOf(StagePath path) => 
             Stages.Where(x => x.Key == path || x.Key.IsDescendantOf(path)).Select(x => x.Key).ToArray();
 
+        private void InvokeCreateChildren(IModule stage)
+        {
+            try
+            {
+                foreach (var child in (stage as ModuleBase).InvokeCreateChildren())
+                {
+                    Stages.TryAdd(child.StagePath, child);
+                    BuildStage(child);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.Write(LogLevels.Error, stage.StagePath, $"Stage {stage} faulted during invoke create children: {ex}");
+            }
+        }
+
         private void RunStage(StagePath path, IModule stage)
         {
             try
             {
                 (stage as ModuleBase).Run();
+                InvokeCreateChildren(stage);
                 RunChildren(path, stage);
             }
             catch (OperationCanceledException)
@@ -151,6 +181,7 @@ namespace AutomationFramework
                     switch (t.Status)
                     {
                         case TaskStatus.RanToCompletion:
+                            InvokeCreateChildren(stage);
                             RunChildren(path, stage);
                             break;
                         case TaskStatus.Canceled:
@@ -183,18 +214,16 @@ namespace AutomationFramework
             foreach (var childPath in GetChildPaths(path))
             {
                 var child = GetStage(childPath);
-                if ((stage as ModuleBase).InvokeConfigureChild(child))
+
+                if (stage.MaxParallelChildren == 1)
                 {
-                    if (stage.MaxParallelChildren == 1)
-                    {
-                        RunStage(childPath, child);
-                    }
-                    else
-                    {
-                        tasks.Add(RunStageInParallel(childPath.Clone(), child));
-                        if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
-                            tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
-                    }
+                    RunStage(childPath, child);
+                }
+                else
+                {
+                    tasks.Add(RunStageInParallel(childPath, child));
+                    if (stage.MaxParallelChildren > 0 && tasks.Count == stage.MaxParallelChildren)
+                        tasks.RemoveAt(Task.WaitAny(tasks.ToArray()));
                 }
             }
 

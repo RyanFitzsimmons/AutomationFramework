@@ -20,56 +20,62 @@ namespace AutomationFramework.UnitTests
         [Fact]
         public void Run()
         {
-            var job = new TestKernel(1, new TestDataLayer(), new TestLogger());
+            var dataLayer = new TestDataLayer();
+            var job = new TestKernel(1, dataLayer, new TestLogger());
             job.Run(RunInfo<string>.Empty, new TestMetaData());
-            RunResults(job);
+            RunResults(job, dataLayer);
         }
 
         [Fact]
         public void RunParallel()
         {
-            var job = new TestKernel(3, new TestDataLayer(), new TestLogger());
+            var dataLayer = new TestDataLayer();
+            var job = new TestKernel(3, dataLayer, new TestLogger());
             job.Run(RunInfo<string>.Empty, new TestMetaData());
-            RunResults(job);
+            RunResults(job, dataLayer);
         }
 
         [Fact]
         public void RunSingle()
         {
-            var job = new TestKernel(1, new TestDataLayer(), new TestLogger());
+            var dataLayer = new TestDataLayer();
+            var job = new TestKernel(1, dataLayer, new TestLogger());
             job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
-            RunSingleResults(job);
+            RunSingleResults(job, dataLayer);
         }
 
         [Fact]
         public void RunSingleParallel()
         {
-            var job = new TestKernel(3, new TestDataLayer(), new TestLogger());
+            var dataLayer = new TestDataLayer();
+            var job = new TestKernel(3, dataLayer, new TestLogger());
             job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
-            RunSingleResults(job);
+            RunSingleResults(job, dataLayer);
         }
 
         [Fact]
         public void RunFrom()
         {
-            var job = new TestKernel(1, new TestDataLayer(), new TestLogger());
+            var dataLayer = new TestDataLayer();
+            var job = new TestKernel(1, dataLayer, new TestLogger());
             job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
-            RunFromResults(job);
+            RunFromResults(job, dataLayer);
         }
 
         [Fact]
         public void RunFromParallel()
         {
-            var job = new TestKernel(3, new TestDataLayer(), new TestLogger());
+            var dataLayer = new TestDataLayer();
+            var job = new TestKernel(3, dataLayer, new TestLogger());
             job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
-            RunFromResults(job);
+            RunFromResults(job, dataLayer);
         }
 
-        private static void RunSingleResults(TestKernel job)
+        private static void RunSingleResults(TestKernel job, TestDataLayer dataLayer)
         {
-            Assert.Equal(13, job.TestModules.Count);
+            Assert.Equal(16, dataLayer.TestModules.Count);
 
-            foreach (TestModuleWithResult module in job.TestModules)
+            foreach (TestModuleWithResult module in dataLayer.TestModules)
             {
                 switch (module.StagePath.ToString())
                 {
@@ -97,7 +103,7 @@ namespace AutomationFramework.UnitTests
                                 case 5:
                                 case 6:
                                 case 7:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -108,9 +114,11 @@ namespace AutomationFramework.UnitTests
                     case "1-2-1":
                     case "1-2-2":
                     case "1-2-3":
+                    case "1-2-4":
                     case "1-3-1":
                     case "1-3-2":
                     case "1-3-3":
+                    case "1-3-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -125,7 +133,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -149,7 +157,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -160,6 +168,7 @@ namespace AutomationFramework.UnitTests
                     case "1-1-1":
                     case "1-1-2":
                     case "1-1-3":
+                    case "1-1-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -174,7 +183,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -197,7 +206,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -211,11 +220,11 @@ namespace AutomationFramework.UnitTests
             }
         }
 
-        private static void RunFromResults(TestKernel job)
+        private static void RunFromResults(TestKernel job, TestDataLayer dataLayer)
         {
-            Assert.Equal(13, job.TestModules.Count);
+            Assert.Equal(16, dataLayer.TestModules.Count);
 
-            foreach (TestModuleWithResult module in job.TestModules)
+            foreach (TestModuleWithResult module in dataLayer.TestModules)
             {
                 switch (module.StagePath.ToString())
                 {
@@ -223,6 +232,7 @@ namespace AutomationFramework.UnitTests
                     case "1-2-1":
                     case "1-2-2":
                     case "1-2-3":
+                    case "1-2-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         { 
                             var action = module.Actions[j];
@@ -246,7 +256,7 @@ namespace AutomationFramework.UnitTests
                                 case 5:
                                 case 6:
                                 case 7:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -258,6 +268,7 @@ namespace AutomationFramework.UnitTests
                     case "1-3-1":
                     case "1-3-2":
                     case "1-3-3":
+                    case "1-3-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -272,7 +283,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -295,7 +306,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -306,6 +317,7 @@ namespace AutomationFramework.UnitTests
                     case "1-1-1":
                     case "1-1-2":
                     case "1-1-3":
+                    case "1-1-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -320,7 +332,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -343,7 +355,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Existing Result", action);
                                     break;
                                 default:
@@ -357,11 +369,11 @@ namespace AutomationFramework.UnitTests
             }
         }
 
-        private static void RunResults(TestKernel job)
+        private static void RunResults(TestKernel job, TestDataLayer dataLayer)
         {
-            Assert.Equal(13, job.TestModules.Count);
+            Assert.Equal(16, dataLayer.TestModules.Count);
 
-            foreach (TestModuleWithResult module in job.TestModules)
+            foreach (TestModuleWithResult module in dataLayer.TestModules)
             {
                 switch (module.StagePath.ToString())
                 {
@@ -371,9 +383,11 @@ namespace AutomationFramework.UnitTests
                     case "1-2-1":
                     case "1-2-2":
                     case "1-2-3":
+                    case "1-2-4":
                     case "1-3-1":
                     case "1-3-2":
                     case "1-3-3":
+                    case "1-3-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -397,7 +411,7 @@ namespace AutomationFramework.UnitTests
                                 case 5:
                                 case 6:
                                 case 7:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:
@@ -409,6 +423,7 @@ namespace AutomationFramework.UnitTests
                     case "1-1-1":
                     case "1-1-2":
                     case "1-1-3":
+                    case "1-1-4":
                         for (int j = 0; j < module.Actions.Count; j++)
                         {
                             var action = module.Actions[j];
@@ -423,7 +438,7 @@ namespace AutomationFramework.UnitTests
                                 case 2:
                                 case 3:
                                 case 4:
-                                    if (job.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
+                                    if (dataLayer.TestModules.Any(x => x.StagePath.IsChildOf(module.StagePath)))
                                         Assert.Equal("Get Current Result", action);
                                     break;
                                 default:

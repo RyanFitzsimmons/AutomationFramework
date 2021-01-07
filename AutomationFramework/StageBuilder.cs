@@ -1,31 +1,28 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
     public class StageBuilder<TModule> : IStageBuilder where TModule : IModule
     {
-        public StageBuilder(IDataLayer dataLayer, IRunInfo runInfo, StagePath path)
+        public StageBuilder(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath)
         {
             DataLayer = dataLayer;
             RunInfo = runInfo;
-            Path = path;
+            StagePath = stagePath;
         }
 
-        private IDataLayer DataLayer { get; }
-        private IRunInfo RunInfo { get; }
-        private StagePath Path { get; }
-        private TModule Module { get; set; }
+        public IDataLayer DataLayer { get; }
+        public IRunInfo RunInfo { get; }
+        public StagePath StagePath { get; }
         private int ChildIndex { get; set; }
         private List<IStageBuilder> Builders { get; set; } = new List<IStageBuilder>();
+        private Func<IStageBuilder, TModule> ConfigureDelegate { get; set; }
+        private bool IsBuilt { get; set; }
 
-        public StageBuilder<TModule> Configure(Func<IDataLayer, IRunInfo, StagePath, TModule> configureDelegate)
-        {            
-            Module = configureDelegate.Invoke(DataLayer, RunInfo, Path);
+        public StageBuilder<TModule> Configure(Func<IStageBuilder, TModule> configureDelegate)
+        {
+            ConfigureDelegate = configureDelegate;
             return this;
         }
 
@@ -36,35 +33,27 @@ namespace AutomationFramework
             return this;
         }
 
-        public StageBuilder<TModule> Add<TChildModule>(Action<StageBuilder<TChildModule>> builderDelegate) where TChildModule : IModule
+        public IStageBuilder Add<TChildModule>(Action<StageBuilder<TChildModule>> builderDelegate) where TChildModule : IModule
         {
-            var builder = new StageBuilder<TChildModule>(DataLayer, RunInfo, Path.CreateChild(++ChildIndex));
+            var builder = new StageBuilder<TChildModule>(DataLayer, RunInfo, StagePath.CreateChild(++ChildIndex));
             builderDelegate.Invoke(builder);
             Builders.Add(builder);
             return this;
         }
 
-        public ConcurrentDictionary<StagePath, IModule> Build()
-        {
-            var stages = new ConcurrentDictionary<StagePath, IModule>();
-            if (Module != null)
-            {
-                stages.TryAdd(Path, Module);
-                foreach (var builder in Builders)
-                    foreach (var pair in builder.Build())
-                        stages.TryAdd(pair.Key, pair.Value);
-            }
-            return stages;
-        }
-
-        public IModule[] BuildToArray()
+        public IModule[] Build()
         {
             List<IModule> modules = new ();
-            if (Module != null)
+            if (ConfigureDelegate != null)
             {
-                modules.Add(Module);
+                if (!IsBuilt)
+                {
+                    modules.Add(ConfigureDelegate.Invoke(this));
+                    IsBuilt = true;
+                }
+
                 foreach (var builder in Builders)
-                    modules.AddRange(builder.BuildToArray());
+                    modules.AddRange(builder.Build());
             }
             return modules.ToArray();
         }

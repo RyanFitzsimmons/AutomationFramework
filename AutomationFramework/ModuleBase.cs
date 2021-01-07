@@ -13,18 +13,17 @@ namespace AutomationFramework
     /// </summary>
     public abstract class ModuleBase : IModule
     {
-        public ModuleBase(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath)
+        public ModuleBase(IStageBuilder builder)
         {
-            RunInfo = runInfo;
-            StagePath = stagePath;            
-            DataLayer = dataLayer;
+            Builder = builder;
         }
 
         private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
 
-        public IRunInfo RunInfo { get; }
-        public StagePath StagePath { get; }
-        protected IDataLayer DataLayer { get; }
+        protected internal IStageBuilder Builder { get; }
+        public IRunInfo RunInfo => Builder.RunInfo;
+        public StagePath StagePath => Builder.StagePath;
+        protected IDataLayer DataLayer => Builder.DataLayer;
 
         /// <summary>
         /// Is enabled by default
@@ -121,7 +120,7 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
-        internal abstract bool InvokeConfigureChild(IModule child);
+        internal abstract IModule[] InvokeCreateChildren();
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 

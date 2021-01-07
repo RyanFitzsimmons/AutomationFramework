@@ -7,7 +7,7 @@ namespace AutomationFramework
 {
     public class Module<TResult> : ModuleBase where TResult : class
     {
-        public Module(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
+        public Module(IStageBuilder builder) : base(builder)
         {
         }
 
@@ -18,7 +18,7 @@ namespace AutomationFramework
         /// The main use of this is for a module with a result to pass
         /// information onto its children.
         /// </summary>
-        public Func<TResult, IModule, bool> ConfigureChildWithResult { get; init; }
+        public Action<IStageBuilder, TResult> CreateChildren { get; init; }
 
         public Func<IModule, TResult> Work { get; init; }
 
@@ -48,19 +48,12 @@ namespace AutomationFramework
         protected virtual TResult DoWork() => 
             Work == null ? default : Work.Invoke(this);
 
-        internal override bool InvokeConfigureChild(IModule child)
+        internal override IModule[] InvokeCreateChildren()
         {
             CheckForCancellation();
             var result = GetResult();
-            if (result == default(TResult))
-            {
-                Log(LogLevels.Warning, $"{this} no result found");
-                return false;
-            }
-            else
-            {
-                return ConfigureChildWithResult?.Invoke(result, child) ?? true;
-            }
+            CreateChildren?.Invoke(Builder, result);
+            return Builder.Build();
         }
 
         private TResult GetResult()

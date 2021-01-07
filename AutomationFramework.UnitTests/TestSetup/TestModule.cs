@@ -6,7 +6,7 @@ namespace AutomationFramework.UnitTests.TestSetup
 {
     public class TestModule : Module
     {
-        public TestModule(IDataLayer dataLayer, IRunInfo runInfo, StagePath stagePath) : base(dataLayer, runInfo, stagePath)
+        public TestModule(IStageBuilder builder) : base(builder)
         {
         }
 
