@@ -223,8 +223,10 @@ namespace AutomationFramework
             HasRunBeenCalled = true;
 
             ValidateRunInfo(runInfo);
-            runInfo = DataLayer.GetJobId(this, runInfo, MetaData);
-            runInfo = DataLayer.CreateRequest(runInfo);
+            if (DataLayer.GetIsNewJob(runInfo))
+                runInfo = DataLayer.CreateJob(this, runInfo);
+            else DataLayer.ValidateExistingJob(runInfo, Version);
+            runInfo = DataLayer.CreateRequest(runInfo, MetaData);
             return runInfo;
         }
 

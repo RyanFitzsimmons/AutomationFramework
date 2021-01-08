@@ -11,14 +11,29 @@ namespace AutomationFramework.UnitTests.TestSetup
     {
         private readonly ConcurrentDictionary<StagePath, object> Results = new ConcurrentDictionary<StagePath, object>();
 
-        public IRunInfo CreateRequest(IRunInfo runInfo)
+        public bool GetIsNewJob(IRunInfo runInfo)
+        {
+            return string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId);
+        }
+
+        public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo)
+        {
+            return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path);
+        }
+
+        public void ValidateExistingJob(IRunInfo runInfo, string version)
+        {
+
+        }
+
+        public IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData)
         {
             return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
         }
 
-        public static IRunInfo CreateJob(IRunInfo runInfo)
+        public IRunInfo CreateRequest(IRunInfo runInfo)
         {
-            return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path);
+            return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
         }
 
         public void CreateStage(IModule module)
@@ -30,18 +45,6 @@ namespace AutomationFramework.UnitTests.TestSetup
         {
             Results.TryGetValue(module.StagePath, out object value);
             return value as TResult;
-        }
-
-        public IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo, IMetaData metaData)
-        {
-            if (string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId))
-            {
-                return CreateJob(runInfo);
-            }
-            else
-            {
-                return runInfo;
-            }
         }
 
         public TResult GetPreviousResult<TResult>(IModule module) where TResult : class

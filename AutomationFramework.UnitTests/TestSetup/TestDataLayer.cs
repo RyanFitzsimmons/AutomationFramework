@@ -11,32 +11,24 @@ namespace AutomationFramework.UnitTests.TestSetup
     {
         public ConcurrentBag<IModule> TestModules { get; private set; } = new ConcurrentBag<IModule>();
 
-        public static void CheckExistingJob()
+        public bool GetIsNewJob(IRunInfo runInfo)
         {
-            //throw new NotSupportedException("Data layer is for Run type only");
+            return string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId);
         }
 
-        public static IRunInfo CreateJob(IRunInfo runInfo)
+        public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo)
         {
             return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path);
         }
 
-        public IRunInfo CreateRequest(IRunInfo runInfo)
+        public void ValidateExistingJob(IRunInfo runInfo, string version)
         {
-            return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
+
         }
 
-        public IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo, IMetaData metaData)
+        public IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData)
         {
-            if (string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId))
-            {
-                return CreateJob(runInfo);
-            }
-            else
-            {
-                CheckExistingJob();
-                return runInfo;
-            }
+            return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
         }
 
         public void CreateStage(IModule module)
