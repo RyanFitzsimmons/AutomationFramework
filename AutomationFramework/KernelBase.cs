@@ -21,21 +21,12 @@ namespace AutomationFramework
         public abstract string Name { get; }
         protected ILogger Logger { get; }
         protected TDataLayer DataLayer { get; }
-
-        /// <summary>
-        /// Stores the meta data for GetMetaData method
-        /// </summary>
         private IMetaData MetaData { get; set; }
         private IRunInfo RunInfo { get; set; }
         private bool HasRunBeenCalled { get; set; }
         private ConcurrentDictionary<StagePath, IModule> Stages { get; set; } 
             = new ConcurrentDictionary<StagePath, IModule>();               
 
-        /// <summary>
-        /// This method should only be used when configuring the stage builder
-        /// </summary>
-        /// <typeparam name="TMetaData"></typeparam>
-        /// <returns>Meta data</returns>
         protected TMetaData GetMetaData<TMetaData>() where TMetaData : class, IMetaData =>
             MetaData as TMetaData;
 
@@ -73,7 +64,8 @@ namespace AutomationFramework
             var builder = Configure();
             foreach (var stage in builder.Build())
             {
-                Stages.TryAdd(stage.StagePath, stage);
+                if (!Stages.TryAdd(stage.StagePath, stage))
+                    throw new Exception($"Failed to add stage to the concurrent dictionary {stage.StagePath}");
                 BuildStage(stage);
             }
         }
@@ -111,14 +103,15 @@ namespace AutomationFramework
                 CancellationSource.Cancel();
                 foreach (var pathToCancel in GetPathAndDescendantsOf(path))
                 {
-                    Stages.TryGetValue(pathToCancel, out IModule stage);
-                    (stage as ModuleBase).Cancel();
+                    if (Stages.TryGetValue(pathToCancel, out IModule stage))
+                        (stage as ModuleBase).Cancel();
+                    else throw new Exception($"Unable to find stage to cancel {pathToCancel}");
                 }
             }
             catch (Exception ex)
             {
-                Logger?.Write(LogLevels.Fatal, "Error during cancellation");
-                Logger?.Write(LogLevels.Fatal, ex);
+                Logger?.Write(LogLevels.Error, "Error during cancellation");
+                Logger?.Write(LogLevels.Error, ex);
             }
         }
 
@@ -131,7 +124,8 @@ namespace AutomationFramework
             {
                 foreach (var child in (stage as ModuleBase).InvokeCreateChildren())
                 {
-                    Stages.TryAdd(child.StagePath, child);
+                    if (!Stages.TryAdd(child.StagePath, child))
+                        throw new Exception($"Failed to add stage to the concurrent dictionary {child.StagePath}");
                     BuildStage(child);
                 }
             }
@@ -159,9 +153,8 @@ namespace AutomationFramework
             }
         }
 
-        private Task RunStageInParallel(StagePath path, IModule stage)
-        {
-            return Task.Factory.StartNew(() =>
+        private Task RunStageInParallel(StagePath path, IModule stage) =>
+            Task.Factory.StartNew(() =>
                 {
                     (stage as ModuleBase).Run();
                 }, (stage as ModuleBase).GetCancellationToken())
@@ -184,11 +177,11 @@ namespace AutomationFramework
                             break;
                     }
                 });
-        }
 
         private IModule GetStage(StagePath path)
         {
-            Stages.TryGetValue(path, out IModule stage);
+            if (!Stages.TryGetValue(path, out IModule stage))
+                throw new Exception($"Unable to find stage {path}");
             return stage;
         }
 
@@ -243,8 +236,7 @@ namespace AutomationFramework
 
         /// <summary>
         /// Performs validation on the RunInfo
-        /// if validation fails a RunInfoValidationException is thrown.
-        /// This method should only be called from the job thread.
+        /// if validation fails an Exception is thrown.
         /// </summary>
         protected virtual void ValidateRunInfo(IRunInfo runInfo)
         {

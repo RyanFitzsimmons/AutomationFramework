@@ -186,9 +186,21 @@ namespace AutomationFramework
 
             StagePath otherStagePath = obj as StagePath;
             if (otherStagePath != null)
-                return this.ToString().CompareTo(otherStagePath.ToString());
+            {
+                for (int i = 0; i < Math.Min(Length, otherStagePath.Length); i++)
+                {
+                    var index1 = this[i];
+                    var index2 = otherStagePath[i];
+                    var comp = index1.CompareTo(index2);
+                    if (comp != 0) return comp;
+                }
+
+                return Length.CompareTo(otherStagePath.Length);
+            }
             else
+            {
                 throw new ArgumentException("Object is not a StagePath");
+            }
         }
 
         public static bool operator ==(StagePath a, StagePath b)

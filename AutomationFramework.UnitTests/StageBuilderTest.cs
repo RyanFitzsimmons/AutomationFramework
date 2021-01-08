@@ -10,9 +10,9 @@ using Xunit.Abstractions;
 
 namespace AutomationFramework.UnitTests
 {
-    public class BuilderTest
+    public class StageBuilderTest
     {
-        public BuilderTest(ITestOutputHelper output)
+        public StageBuilderTest(ITestOutputHelper output)
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Xunit(output)

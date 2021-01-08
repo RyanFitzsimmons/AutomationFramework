@@ -14,7 +14,7 @@ namespace AutomationFramework
         /// </summary>
         /// <param name="kernel">The kernel</param>
         /// <param name="runInfo">The runInfo</param>
-        /// <param name="metaData">The metaData of the job</param>
+        /// <param name="metaData">The metaData</param>
         /// <returns>The runInfo with the potentially updated job Id</returns>
         IRunInfo GetJobId(IKernel kernel, IRunInfo runInfo, IMetaData metaData);
         IRunInfo CreateRequest(IRunInfo runInfo);

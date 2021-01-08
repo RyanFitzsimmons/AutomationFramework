@@ -54,7 +54,7 @@ namespace AutomationFramework
         {
             try
             {
-                //Log(LogLevels.Information, $"{Name} Building");
+                Log(LogLevels.Information, $"{Name} Building");
                 DataLayer.CreateStage(this);
                 OnBuild?.Invoke(this);
             }

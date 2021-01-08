@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <PackageId>AutomationFramework</PackageId>
-    <Version>1.0.29</Version>
+    <Version>1.0.30</Version>
     <Authors>Ryan Fitzsimmons</Authors>
     <PackageDescription>A framework to assist in creating modular restartable code</PackageDescription>
     <RepositoryUrl>https://github.com/RyanFitzsimmons/AutomationFramework/tree/master/AutomationFramework</RepositoryUrl>

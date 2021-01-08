@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,14 +9,14 @@ namespace AutomationFramework.UnitTests.TestSetup
 {
     public class TestDataLayer : IDataLayer
     {
-        public List<IModule> TestModules { get; private set; } = new List<IModule>();
+        public ConcurrentBag<IModule> TestModules { get; private set; } = new ConcurrentBag<IModule>();
 
-        public void CheckExistingJob(IRunInfo runInfo, string version)
+        public static void CheckExistingJob()
         {
             //throw new NotSupportedException("Data layer is for Run type only");
         }
 
-        public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo, IMetaData metaData)
+        public static IRunInfo CreateJob(IRunInfo runInfo)
         {
             return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path);
         }
@@ -29,18 +30,13 @@ namespace AutomationFramework.UnitTests.TestSetup
         {
             if (string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId))
             {
-                return CreateJob(kernel, runInfo, metaData);
+                return CreateJob(runInfo);
             }
             else
             {
-                CheckExistingJob(runInfo, kernel.Version);
+                CheckExistingJob();
                 return runInfo;
             }
-        }
-
-        public IMetaData GetMetaData(IRunInfo runInfo) 
-        {
-            return new TestMetaData();
         }
 
         public void CreateStage(IModule module)
