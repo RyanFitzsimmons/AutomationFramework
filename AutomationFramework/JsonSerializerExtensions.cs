@@ -10,7 +10,7 @@ namespace AutomationFramework
         public static string ToJson<T>(this T input, JsonSerializerOptions options = default) where T : class =>
             JsonSerializer.Serialize<T>(input, options);
 
-        public static T ToAnonymousType<T>(string json, T anonymousTypeObject, JsonSerializerOptions options = default)
+        public static T ToAnonymousType<T>(this string json, T anonymousTypeObject, JsonSerializerOptions options = default)
             => JsonSerializer.Deserialize<T>(json, options);
     }
 }
