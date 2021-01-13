@@ -31,7 +31,7 @@ namespace AutomationFramework
                 CheckForCancellation();
                 var result = DoWork();
                 CheckForCancellation();
-                DataLayer.SaveResult(this, result);
+                DataLayer?.SaveResult(this, result);
                 CheckForCancellation();
                 OnRunFinish(result);
             }
