@@ -55,7 +55,7 @@ namespace AutomationFramework
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
-                DataLayer.CreateStage(this);
+                DataLayer?.CreateStage(this);
                 OnBuild?.Invoke(this);
             }
             catch (Exception ex)
@@ -108,7 +108,7 @@ namespace AutomationFramework
         internal protected void SetStatusBase(StageStatuses status)
         {
             Log(LogLevels.Information, status);
-            DataLayer.SetStatus(this, status);
+            DataLayer?.SetStatus(this, status);
         }
 
         protected bool MeetsRunCriteria() =>

@@ -34,15 +34,9 @@ namespace AutomationFramework
             }
         }
 
-        protected virtual void OnRunStart()
-        {
-            SetStatusBase(StageStatuses.Running);
-        }
+        protected virtual void OnRunStart() => SetStatusBase(StageStatuses.Running);
 
-        protected virtual void OnRunFinish()
-        {
-            SetStatusBase(StageStatuses.Completed);
-        }
+        protected virtual void OnRunFinish() => SetStatusBase(StageStatuses.Completed);
 
         protected virtual void DoWork() =>
             Work?.Invoke(this);
