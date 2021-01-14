@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
@@ -17,7 +12,7 @@ namespace AutomationFramework
         public Action<IModule> Work { get; init; }
         public override string Name { get; init; } = "Default Module";
 
-        internal protected override void RunWork()
+        internal override void RunWork()
         {
             if (MeetsRunCriteria())
             {
@@ -30,13 +25,13 @@ namespace AutomationFramework
             }
             else
             {
-                SetStatusBase(StageStatuses.Bypassed);
+                SetStatus(StageStatuses.Bypassed);
             }
         }
 
-        protected virtual void OnRunStart() => SetStatusBase(StageStatuses.Running);
+        protected virtual void OnRunStart() => SetStatus(StageStatuses.Running);
 
-        protected virtual void OnRunFinish() => SetStatusBase(StageStatuses.Completed);
+        protected virtual void OnRunFinish() => SetStatus(StageStatuses.Completed);
 
         protected virtual void DoWork() =>
             Work?.Invoke(this);

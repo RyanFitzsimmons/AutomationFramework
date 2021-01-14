@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
@@ -48,7 +44,7 @@ namespace AutomationFramework
         /// </summary>
         public event Action<IModule> PreCancellation;
 
-        public virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
+        public void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
         public void Build()
         {
@@ -74,7 +70,7 @@ namespace AutomationFramework
             try
             {
                 if (IsEnabled) RunWork();
-                else SetStatusBase(StageStatuses.Disabled);
+                else SetStatus(StageStatuses.Disabled);
             }
             catch (OperationCanceledException)
             {
@@ -83,7 +79,7 @@ namespace AutomationFramework
                 /// OnLog event gets a full view
                 /// the exception is thrown again so the kernel knows 
                 /// not to create the children
-                SetStatusBase(StageStatuses.Cancelled);
+                SetStatus(StageStatuses.Cancelled);
                 throw;
             }
             catch (Exception ex)
@@ -93,7 +89,7 @@ namespace AutomationFramework
                 /// OnLog event gets a full view
                 /// the exception is thrown again so the kernel knows 
                 /// not to create the children
-                SetStatusBase(StageStatuses.Errored);
+                SetStatus(StageStatuses.Errored);
                 Log(LogLevels.Error, ex);
                 throw;
             }
@@ -103,15 +99,15 @@ namespace AutomationFramework
             }
         }
 
-        internal protected abstract void RunWork();
+        internal abstract void RunWork();
 
-        internal protected void SetStatusBase(StageStatuses status)
+        protected void SetStatus(StageStatuses status)
         {
             Log(LogLevels.Information, status);
             DataLayer?.SetStatus(this, status);
         }
 
-        protected bool MeetsRunCriteria() =>
+        internal bool MeetsRunCriteria() =>
             RunInfo.Type switch
             {
                 RunType.Standard => true,

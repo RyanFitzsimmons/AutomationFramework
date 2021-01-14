@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AutomationFramework
 {
@@ -164,9 +163,6 @@ namespace AutomationFramework
 
         public override int GetHashCode() =>
             HashCode.Combine(JobId, RequestId, Path, Type.GetHashCode());
-
-        public IRunInfo Clone() =>
-            new RunInfo<TId>(this);
 
         public static bool operator ==(RunInfo<TId> a, RunInfo<TId> b) =>
             a.Equals(b);

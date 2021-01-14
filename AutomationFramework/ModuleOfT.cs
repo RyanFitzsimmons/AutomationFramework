@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace AutomationFramework
 {
@@ -22,7 +19,7 @@ namespace AutomationFramework
 
         public Func<IModule, TResult> Work { get; init; }
 
-        internal protected override void RunWork()
+        internal override void RunWork()
         {
             if (MeetsRunCriteria())
             {
@@ -37,13 +34,13 @@ namespace AutomationFramework
             }
             else
             {
-                SetStatusBase(StageStatuses.Bypassed);
+                SetStatus(StageStatuses.Bypassed);
             }
         }
 
-        protected virtual void OnRunStart() => SetStatusBase(StageStatuses.Running);
+        protected virtual void OnRunStart() => SetStatus(StageStatuses.Running);
 
-        protected virtual void OnRunFinish(TResult result) => SetStatusBase(StageStatuses.Completed);
+        protected virtual void OnRunFinish(TResult result) => SetStatus(StageStatuses.Completed);
 
         protected virtual TResult DoWork() => 
             Work == null ? default : Work.Invoke(this);

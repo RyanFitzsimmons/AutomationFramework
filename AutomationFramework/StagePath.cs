@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 using System.Collections;
 
@@ -40,13 +39,7 @@ namespace AutomationFramework
 
         public static StagePath Root { get { return new StagePath(1); } }
 
-        public int this[int index]
-        {
-            get
-            {
-                return _Indices[index];
-            }
-        }
+        public int this[int index] => _Indices[index];
 
         public static StagePath Parse(string s)
         {
@@ -77,7 +70,7 @@ namespace AutomationFramework
             }
         }
 
-        public int Length { get { return _Indices.Length; } }
+        public int Length => _Indices.Length;
 
         private static void ValidateIndices(IEnumerable<int> indices)
         {
@@ -160,25 +153,11 @@ namespace AutomationFramework
             return path.TrimEnd('-');
         }
 
-        public bool Equals(StagePath other)
-        {
-            return other != null && this.ToString() == other.ToString();
-        }
+        public bool Equals(StagePath other) => other != null && this.ToString() == other.ToString();
 
-        public override bool Equals(object other)
-        {
-            return other is StagePath path && Equals(path);
-        }
+        public override bool Equals(object other) => other is StagePath path && Equals(path);
 
-        public override int GetHashCode()
-        {
-            return ((IStructuralEquatable)Indices).GetHashCode(EqualityComparer<int>.Default);
-        }
-
-        public StagePath Clone()
-        {
-            return new StagePath(this);
-        }
+        public override int GetHashCode() => ((IStructuralEquatable)Indices).GetHashCode(EqualityComparer<int>.Default);
 
         public int CompareTo(object obj)
         {
@@ -211,19 +190,10 @@ namespace AutomationFramework
             return a.Equals(b);
         }
 
-        public static bool operator !=(StagePath a, StagePath b)
-        {
-            return !(a == b);
-        }
+        public static bool operator !=(StagePath a, StagePath b) => !(a == b);
 
-        public static bool operator <(StagePath a, StagePath b)
-        {
-            return a.CompareTo(b) < 0;
-        }
+        public static bool operator <(StagePath a, StagePath b) => a.CompareTo(b) < 0;
 
-        public static bool operator >(StagePath a, StagePath b)
-        {
-            return a.CompareTo(b) > 0;
-        }
+        public static bool operator >(StagePath a, StagePath b) => a.CompareTo(b) > 0;
     }
 }
