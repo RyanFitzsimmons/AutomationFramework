@@ -48,7 +48,7 @@ namespace AutomationFramework
         /// </summary>
         public event Action<IModule> PreCancellation;
 
-        protected virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
+        public virtual void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
         public void Build()
         {
