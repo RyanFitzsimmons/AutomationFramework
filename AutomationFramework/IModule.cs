@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutomationFramework
@@ -15,5 +16,6 @@ namespace AutomationFramework
         Task Run();
         void Cancel();
         Task<IModule[]> InvokeCreateChildren();
+        CancellationToken GetCancellationToken();
     }
 }

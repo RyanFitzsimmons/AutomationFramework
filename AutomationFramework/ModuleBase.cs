@@ -15,7 +15,7 @@ namespace AutomationFramework
             Builder = builder;
         }
 
-        private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _cancellationSource = new CancellationTokenSource();
 
         protected internal IStageBuilder Builder { get; }
         public IRunInfo RunInfo => Builder.RunInfo;
@@ -36,6 +36,13 @@ namespace AutomationFramework
         /// </summary>
         public virtual int MaxParallelChildren { get; init; } = 1;
 
+        /// <summary>
+        /// If the module is cancelled it will try to update the status of the stage
+        /// in the datalayer to `Cancelled`. This is the ammount of time the task will wait before 
+        /// cancelling the data layer request. Default = 10000 (10 seconds)
+        /// </summary>
+        public int CancelStatusCancelAfter { get; init; } = 10000;
+
         public event Action<IModule, LogLevels, object> OnLog;
         public event Action<IModule> OnBuild;
         public event Action<IModule> OnCompletion;
@@ -52,7 +59,7 @@ namespace AutomationFramework
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
-                await DataLayer?.CreateStage(this);
+                await DataLayer?.CreateStage(this, GetCancellationToken());
                 OnBuild?.Invoke(this);
             }
             catch (Exception ex)
@@ -105,7 +112,21 @@ namespace AutomationFramework
         protected async Task SetStatus(StageStatuses status)
         {
             Log(LogLevels.Information, status);
-            await DataLayer?.SetStatus(this, status);
+            if (status == StageStatuses.Cancelled) await SetCancelledStatus();
+            else await DataLayer?.SetStatus(this, status, GetCancellationToken());
+        }
+
+        private async Task SetCancelledStatus()
+        {
+            try
+            {
+                var cancelStatusCancellationSource = new CancellationTokenSource(CancelStatusCancelAfter);
+                await DataLayer?.SetStatus(this, StageStatuses.Cancelled, cancelStatusCancellationSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Log(LogLevels.Error, "Failed to set cancelled status in data layer");
+            }
         }
 
         internal bool MeetsRunCriteria() =>
@@ -119,12 +140,12 @@ namespace AutomationFramework
 
         public abstract Task<IModule[]> InvokeCreateChildren();
 
-        public CancellationToken GetCancellationToken() => CancellationSource.Token;
+        public CancellationToken GetCancellationToken() => _cancellationSource.Token;
 
         public void Cancel()
         {
             PreCancellation?.Invoke(this);
-            CancellationSource.Cancel();
+            _cancellationSource.Cancel();
         }
 
         protected void CheckForCancellation()

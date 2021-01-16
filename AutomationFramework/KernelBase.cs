@@ -9,7 +9,7 @@ namespace AutomationFramework
 {
     public abstract class KernelBase<TDataLayer> : IKernel where TDataLayer : IDataLayer
     {
-        private readonly CancellationTokenSource CancellationSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _cancellationSource = new CancellationTokenSource();
 
         public KernelBase(TDataLayer dataLayer, ILogger logger = null)
         {
@@ -92,7 +92,7 @@ namespace AutomationFramework
 
         protected virtual async Task PostStageBuild(IModule stage) => await Task.CompletedTask;
 
-        public CancellationToken GetCancellationToken() => CancellationSource.Token;
+        private CancellationToken GetCancellationToken() => _cancellationSource.Token;
 
         public void Cancel() => Cancel(StagePath.Root);
 
@@ -100,7 +100,9 @@ namespace AutomationFramework
         {
             try
             {
-                CancellationSource.Cancel();
+                if (path == StagePath.Root)
+                    _cancellationSource.Cancel();
+
                 foreach (var pathToCancel in GetPathAndDescendantsOf(path))
                 {
                     if (Stages.TryGetValue(pathToCancel, out IModule stage))
@@ -189,9 +191,9 @@ namespace AutomationFramework
             HasRunBeenCalled = true;
             ValidateRunInfo(runInfo);
             if (DataLayer.GetIsNewJob(runInfo))
-                runInfo = await DataLayer.CreateJob(this, runInfo);
-            else await DataLayer.ValidateExistingJob(runInfo, Version);
-            runInfo = await DataLayer.CreateRequest(runInfo, MetaData);
+                runInfo = await DataLayer.CreateJob(this, runInfo, GetCancellationToken());
+            else await DataLayer.ValidateExistingJob(runInfo, Version, GetCancellationToken());
+            runInfo = await DataLayer.CreateRequest(runInfo, MetaData, GetCancellationToken());
             return runInfo;
         }
 

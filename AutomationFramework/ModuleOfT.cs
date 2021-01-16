@@ -29,7 +29,7 @@ namespace AutomationFramework
                 CheckForCancellation();
                 var result = await DoWork();
                 CheckForCancellation();
-                await DataLayer?.SaveResult(this, result);
+                await DataLayer?.SaveResult(this, result, GetCancellationToken());
                 CheckForCancellation();
                 await OnRunFinish(result);
             }
@@ -59,15 +59,15 @@ namespace AutomationFramework
             switch(RunInfo.Type)
             {
                 case RunType.Standard:
-                    return await DataLayer?.GetCurrentResult<TResult>(this);
+                    return await DataLayer?.GetCurrentResult<TResult>(this, GetCancellationToken());
                 case RunType.From:
                     if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
-                        return await DataLayer?.GetCurrentResult<TResult>(this);
-                    else return await DataLayer?.GetPreviousResult<TResult>(this);
+                        return await DataLayer?.GetCurrentResult<TResult>(this, GetCancellationToken());
+                    else return await DataLayer?.GetPreviousResult<TResult>(this, GetCancellationToken());
                 case RunType.Single:
                     if (RunInfo.Path == StagePath)
-                        return await DataLayer?.GetCurrentResult<TResult>(this);
-                    else return await DataLayer?.GetPreviousResult<TResult>(this);
+                        return await DataLayer?.GetCurrentResult<TResult>(this, GetCancellationToken());
+                    else return await DataLayer?.GetPreviousResult<TResult>(this, GetCancellationToken());
                 default:
                     throw new Exception($"Unknown RunType {RunInfo.Type}");
             }
