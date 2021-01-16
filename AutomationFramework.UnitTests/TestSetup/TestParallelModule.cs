@@ -14,11 +14,14 @@ namespace AutomationFramework.UnitTests.TestSetup
         public int RandomInteger { get; init; }
         public string[] Array { get; init; }
 
-        protected override TestModuleResult DoWork()
+        protected override async Task<TestModuleResult> DoWork()
         {
-            var task = Task.Delay(RandomInteger);
-            while (!task.IsCompleted)
-                foreach (var item in Array) _ = item;
+            await Task.Run(() =>
+            {
+                var task = Task.Delay(RandomInteger);
+                while (!task.IsCompleted)
+                    foreach (var item in Array) Log(LogLevels.Information, item);
+            });
             return new TestModuleResult()
             {
                 Name = Name,

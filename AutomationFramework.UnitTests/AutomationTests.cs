@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -18,56 +19,56 @@ namespace AutomationFramework.UnitTests
         }
 
         [Fact]
-        public void Run()
+        public async Task Run()
         {
             var dataLayer = new TestDataLayer();
             var job = new TestKernel(1, dataLayer, new TestLogger());
-            job.Run(RunInfo<string>.Empty, new TestMetaData());
+            await job.Run(RunInfo<string>.Empty, new TestMetaData());
             RunResults(dataLayer);
         }
 
         [Fact]
-        public void RunParallel()
+        public async Task RunParallel()
         {
             var dataLayer = new TestDataLayer();
             var job = new TestKernel(3, dataLayer, new TestLogger());
-            job.Run(RunInfo<string>.Empty, new TestMetaData());
+            await job.Run(RunInfo<string>.Empty, new TestMetaData());
             RunResults(dataLayer);
         }
 
         [Fact]
-        public void RunSingle()
+        public async Task RunSingle()
         {
             var dataLayer = new TestDataLayer();
             var job = new TestKernel(1, dataLayer, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            await job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunSingleResults(dataLayer);
         }
 
         [Fact]
-        public void RunSingleParallel()
+        public async Task RunSingleParallel()
         {
             var dataLayer = new TestDataLayer();
             var job = new TestKernel(3, dataLayer, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            await job.Run(new RunInfo<string>(RunType.Single, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunSingleResults(dataLayer);
         }
 
         [Fact]
-        public void RunFrom()
+        public async Task RunFrom()
         {
             var dataLayer = new TestDataLayer();
             var job = new TestKernel(1, dataLayer, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            await job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunFromResults(dataLayer);
         }
 
         [Fact]
-        public void RunFromParallel()
+        public async Task RunFromParallel()
         {
             var dataLayer = new TestDataLayer();
             var job = new TestKernel(3, dataLayer, new TestLogger());
-            job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
+            await job.Run(new RunInfo<string>(RunType.From, "Test", "Test", new StagePath(1, 2)), new TestMetaData());
             RunFromResults(dataLayer);
         }
 

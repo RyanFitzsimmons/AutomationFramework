@@ -12,16 +12,16 @@ namespace AutomationFramework
 
         public StagePath(params int[] indices)
         {
-            _Indices = indices == null ? Array.Empty<int>() : indices.ToArray();
-            ValidateIndices(_Indices);
+            _indices = indices == null ? Array.Empty<int>() : indices.ToArray();
+            ValidateIndices(_indices);
         }
 
-        private readonly int[] _Indices;
+        private readonly int[] _indices;
 
         /// <summary>
         /// Represents the path
         /// </summary>
-        public IEnumerable<int> Indices { get { return _Indices; } }
+        public IEnumerable<int> Indices { get { return _indices; } }
 
         /// <summary>
         /// Returns the last index of the Indices. If Indices is empty return 0.
@@ -30,7 +30,7 @@ namespace AutomationFramework
         {
             get
             {
-                if (_Indices.Length == 0) return 0;
+                if (_indices.Length == 0) return 0;
                 return Indices.Last();
             }
         }
@@ -39,7 +39,7 @@ namespace AutomationFramework
 
         public static StagePath Root { get { return new StagePath(1); } }
 
-        public int this[int index] => _Indices[index];
+        public int this[int index] => _indices[index];
 
         public static StagePath Parse(string s)
         {
@@ -70,7 +70,7 @@ namespace AutomationFramework
             }
         }
 
-        public int Length => _Indices.Length;
+        public int Length => _indices.Length;
 
         private static void ValidateIndices(IEnumerable<int> indices)
         {

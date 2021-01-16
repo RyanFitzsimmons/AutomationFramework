@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
@@ -46,12 +47,12 @@ namespace AutomationFramework
 
         public void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
-        public void Build()
+        public async Task Build()
         {
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
-                DataLayer?.CreateStage(this);
+                await DataLayer?.CreateStage(this);
                 OnBuild?.Invoke(this);
             }
             catch (Exception ex)
@@ -65,12 +66,12 @@ namespace AutomationFramework
             }
         }
 
-        public void Run()
+        public async Task Run()
         {
             try
             {
-                if (IsEnabled) RunWork();
-                else SetStatus(StageStatuses.Disabled);
+                if (IsEnabled) await RunWork();
+                else await SetStatus(StageStatuses.Disabled);
             }
             catch (OperationCanceledException)
             {
@@ -79,7 +80,7 @@ namespace AutomationFramework
                 /// OnLog event gets a full view
                 /// the exception is thrown again so the kernel knows 
                 /// not to create the children
-                SetStatus(StageStatuses.Cancelled);
+                await SetStatus(StageStatuses.Cancelled);
                 throw;
             }
             catch (Exception ex)
@@ -89,7 +90,7 @@ namespace AutomationFramework
                 /// OnLog event gets a full view
                 /// the exception is thrown again so the kernel knows 
                 /// not to create the children
-                SetStatus(StageStatuses.Errored);
+                await SetStatus(StageStatuses.Errored);
                 Log(LogLevels.Error, ex);
                 throw;
             }
@@ -99,12 +100,12 @@ namespace AutomationFramework
             }
         }
 
-        internal abstract void RunWork();
+        internal abstract Task RunWork();
 
-        protected void SetStatus(StageStatuses status)
+        protected async Task SetStatus(StageStatuses status)
         {
             Log(LogLevels.Information, status);
-            DataLayer?.SetStatus(this, status);
+            await DataLayer?.SetStatus(this, status);
         }
 
         internal bool MeetsRunCriteria() =>
@@ -116,7 +117,7 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
-        internal abstract IModule[] InvokeCreateChildren();
+        public abstract Task<IModule[]> InvokeCreateChildren();
 
         public CancellationToken GetCancellationToken() => CancellationSource.Token;
 

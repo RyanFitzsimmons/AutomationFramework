@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
@@ -17,56 +18,56 @@ namespace AutomationFramework
         /// </summary>
         public Action<IStageBuilder, TResult> CreateChildren { get; init; }
 
-        public Func<IModule, TResult> Work { get; init; }
+        public Func<IModule, Task<TResult>> Work { get; init; }
 
-        internal override void RunWork()
+        internal override async Task RunWork()
         {
             if (MeetsRunCriteria())
             {
                 CheckForCancellation();
-                OnRunStart();
+                await OnRunStart();
                 CheckForCancellation();
-                var result = DoWork();
+                var result = await DoWork();
                 CheckForCancellation();
-                DataLayer?.SaveResult(this, result);
+                await DataLayer?.SaveResult(this, result);
                 CheckForCancellation();
-                OnRunFinish(result);
+                await OnRunFinish(result);
             }
             else
             {
-                SetStatus(StageStatuses.Bypassed);
+                await SetStatus(StageStatuses.Bypassed);
             }
         }
 
-        protected virtual void OnRunStart() => SetStatus(StageStatuses.Running);
+        protected virtual async Task OnRunStart() => await SetStatus(StageStatuses.Running);
 
-        protected virtual void OnRunFinish(TResult result) => SetStatus(StageStatuses.Completed);
+        protected virtual async Task OnRunFinish(TResult result) => await SetStatus(StageStatuses.Completed);
 
-        protected virtual TResult DoWork() => 
-            Work == null ? default : Work.Invoke(this);
+        protected virtual async Task<TResult> DoWork() => 
+            Work == null ? default : await Work.Invoke(this);
 
-        internal override IModule[] InvokeCreateChildren()
+        public override async Task<IModule[]> InvokeCreateChildren()
         {
             CheckForCancellation();
-            var result = GetResult();
+            var result = await GetResult();
             CreateChildren?.Invoke(Builder, result);
             return Builder.Build();
         }
 
-        private TResult GetResult()
+        private async Task<TResult> GetResult()
         {
             switch(RunInfo.Type)
             {
                 case RunType.Standard:
-                    return DataLayer?.GetCurrentResult<TResult>(this);
+                    return await DataLayer?.GetCurrentResult<TResult>(this);
                 case RunType.From:
                     if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
-                        return DataLayer?.GetCurrentResult<TResult>(this);
-                    else return DataLayer?.GetPreviousResult<TResult>(this);
+                        return await DataLayer?.GetCurrentResult<TResult>(this);
+                    else return await DataLayer?.GetPreviousResult<TResult>(this);
                 case RunType.Single:
                     if (RunInfo.Path == StagePath)
-                        return DataLayer?.GetCurrentResult<TResult>(this);
-                    else return DataLayer?.GetPreviousResult<TResult>(this);
+                        return await DataLayer?.GetCurrentResult<TResult>(this);
+                    else return await DataLayer?.GetPreviousResult<TResult>(this);
                 default:
                     throw new Exception($"Unknown RunType {RunInfo.Type}");
             }

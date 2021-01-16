@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
@@ -9,38 +10,37 @@ namespace AutomationFramework
         }
 
         public Action<IStageBuilder> CreateChildren { get; init; }
-        public Action<IModule> Work { get; init; }
+        public Func<IModule, Task> Work { get; init; }
         public override string Name { get; init; } = "Default Module";
 
-        internal override void RunWork()
+        internal override async Task RunWork()
         {
             if (MeetsRunCriteria())
             {
                 CheckForCancellation();
-                OnRunStart();
+                await OnRunStart();
                 CheckForCancellation();
-                DoWork();
+                await DoWork();
                 CheckForCancellation();
-                OnRunFinish();
+                await OnRunFinish();
             }
             else
             {
-                SetStatus(StageStatuses.Bypassed);
+                await SetStatus(StageStatuses.Bypassed);
             }
         }
 
-        protected virtual void OnRunStart() => SetStatus(StageStatuses.Running);
+        protected virtual async Task OnRunStart() => await SetStatus(StageStatuses.Running);
 
-        protected virtual void OnRunFinish() => SetStatus(StageStatuses.Completed);
+        protected virtual async Task OnRunFinish() => await SetStatus(StageStatuses.Completed);
 
-        protected virtual void DoWork() =>
-            Work?.Invoke(this);
+        protected virtual async Task DoWork() => await Work?.Invoke(this);
 
-        internal override IModule[] InvokeCreateChildren()
+        public override async Task<IModule[]> InvokeCreateChildren()
         {
             CheckForCancellation();
             CreateChildren?.Invoke(Builder);
-            return Builder.Build();
+            return await Task.FromResult(Builder.Build());
         }
     }
 }

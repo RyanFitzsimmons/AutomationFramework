@@ -20,11 +20,11 @@ namespace AutomationFramework.UnitTests
         }
 
         [Fact]
-        public void Parallel()
+        public async Task Parallel()
         {
             var dataLayer = new TestParallelDataLayer();
             var job = new TestParallelKernel(dataLayer, new TestLogger());
-            job.Run(RunInfo<string>.Empty, new TestMetaData());
+            await job.Run(RunInfo<string>.Empty, new TestMetaData());
         }
     }
 }

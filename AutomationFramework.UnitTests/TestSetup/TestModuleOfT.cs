@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace AutomationFramework.UnitTests.TestSetup
@@ -16,10 +13,10 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         public List<string> Actions { get; } = new List<string>();
 
-        protected override TestModuleResult DoWork()
+        protected override async Task<TestModuleResult> DoWork()
         {
             Actions.Add("Doing Work");
-            return base.DoWork();
+            return await base.DoWork();
         }
     }
 }

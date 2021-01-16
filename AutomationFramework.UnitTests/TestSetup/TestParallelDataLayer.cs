@@ -16,50 +16,51 @@ namespace AutomationFramework.UnitTests.TestSetup
             return string.IsNullOrWhiteSpace((runInfo as RunInfo<string>).JobId);
         }
 
-        public IRunInfo CreateJob(IKernel kernel, IRunInfo runInfo)
+        public async Task<IRunInfo> CreateJob(IKernel kernel, IRunInfo runInfo)
         {
-            return new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path);
+            return await Task.FromResult(new RunInfo<string>(runInfo.Type, "Test Job ID", (runInfo as RunInfo<string>).RequestId, runInfo.Path));
         }
 
-        public void ValidateExistingJob(IRunInfo runInfo, string version)
+        public async Task ValidateExistingJob(IRunInfo runInfo, string version)
         {
-
+            await Task.CompletedTask;
         }
 
-        public IRunInfo CreateRequest(IRunInfo runInfo, IMetaData metaData)
+        public async Task<IRunInfo> CreateRequest(IRunInfo runInfo, IMetaData metaData)
         {
-            return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
+            return await Task.FromResult(new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path));
         }
 
-        public IRunInfo CreateRequest(IRunInfo runInfo)
+        public async Task<IRunInfo> CreateRequest(IRunInfo runInfo)
         {
-            return new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path);
+            return await Task.FromResult(new RunInfo<string>(runInfo.Type, (runInfo as RunInfo<string>).JobId, "Test Request ID", runInfo.Path));
         }
 
-        public void CreateStage(IModule module)
+        public async Task CreateStage(IModule module)
         {
-
+            await Task.CompletedTask;
         }
 
-        public TResult GetCurrentResult<TResult>(IModule module) where TResult : class
+        public async Task<TResult> GetCurrentResult<TResult>(IModule module) where TResult : class
         {
             Results.TryGetValue(module.StagePath, out object value);
-            return value as TResult;
+            return await Task.FromResult(value as TResult);
         }
 
-        public TResult GetPreviousResult<TResult>(IModule module) where TResult : class
+        public async Task<TResult> GetPreviousResult<TResult>(IModule module) where TResult : class
         {
-            return null;
+            return await Task.FromResult<TResult>(null);
         }
 
-        public void SaveResult<TResult>(IModule module, TResult result) where TResult : class
+        public async Task SaveResult<TResult>(IModule module, TResult result) where TResult : class
         {
             Results.TryAdd(module.StagePath, result);
+            await Task.CompletedTask;
         }
 
-        public void SetStatus(IModule module, StageStatuses status)
+        public async Task SetStatus(IModule module, StageStatuses status)
         {
-
+            await Task.CompletedTask;
         }
     }
 }
