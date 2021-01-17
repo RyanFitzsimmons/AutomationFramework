@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutomationFramework
@@ -18,56 +19,69 @@ namespace AutomationFramework
         /// </summary>
         public Action<IStageBuilder, TResult> CreateChildren { get; init; }
 
-        public Func<IModule, Task<TResult>> Work { get; init; }
+        public Func<IModule, CancellationToken, Task<TResult>> Work { get; init; }
 
-        internal override async Task RunWork()
+        internal override async Task RunWork(CancellationToken token)
         {
             if (MeetsRunCriteria())
             {
-                CheckForCancellation();
-                await OnRunStart();
-                CheckForCancellation();
-                var result = await DoWork();
-                CheckForCancellation();
-                await DataLayer?.SaveResult(this, result, GetCancellationToken());
-                CheckForCancellation();
-                await OnRunFinish(result);
+                await OnRunStart(token);
+                var result = await DoWork(token);
+                await DataLayer?.SaveResult(this, result, token);
+                await OnRunFinish(result, token);
             }
             else
             {
-                await SetStatus(StageStatuses.Bypassed);
+                await SetStatus(StageStatuses.Bypassed, token);
             }
         }
 
-        protected virtual async Task OnRunStart() => await SetStatus(StageStatuses.Running);
+        protected virtual async Task OnRunStart(CancellationToken token) => await SetStatus(StageStatuses.Running, token);
 
-        protected virtual async Task OnRunFinish(TResult result) => await SetStatus(StageStatuses.Completed);
+        protected virtual async Task OnRunFinish(TResult result, CancellationToken token) => await SetStatus(StageStatuses.Completed, token);
 
-        protected virtual async Task<TResult> DoWork() => 
-            Work == null ? default : await Work.Invoke(this);
+        protected virtual async Task<TResult> DoWork(CancellationToken token) => 
+            Work == null ? default : await Work.Invoke(this, token);
 
         public override async Task<IModule[]> InvokeCreateChildren()
         {
-            CheckForCancellation();
-            var result = await GetResult();
-            CreateChildren?.Invoke(Builder, result);
-            return Builder.Build();
+            try
+            {
+                var result = await GetResult(Token);
+                CreateChildren?.Invoke(Builder, result);
+                return Builder.Build();
+            }
+            catch (OperationCanceledException)
+            {
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                Log(LogLevels.Warning, "Unable to create children. The stage has been cancelled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                Log(LogLevels.Error, "Unable to create children.");
+                Log(LogLevels.Error, ex);
+                throw;
+            }
         }
 
-        private async Task<TResult> GetResult()
+        private async Task<TResult> GetResult(CancellationToken token)
         {
             switch(RunInfo.Type)
             {
                 case RunType.Standard:
-                    return await DataLayer?.GetCurrentResult<TResult>(this, GetCancellationToken());
+                    return await DataLayer?.GetCurrentResult<TResult>(this, token);
                 case RunType.From:
                     if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
-                        return await DataLayer?.GetCurrentResult<TResult>(this, GetCancellationToken());
-                    else return await DataLayer?.GetPreviousResult<TResult>(this, GetCancellationToken());
+                        return await DataLayer?.GetCurrentResult<TResult>(this, token);
+                    else return await DataLayer?.GetPreviousResult<TResult>(this, token);
                 case RunType.Single:
                     if (RunInfo.Path == StagePath)
-                        return await DataLayer?.GetCurrentResult<TResult>(this, GetCancellationToken());
-                    else return await DataLayer?.GetPreviousResult<TResult>(this, GetCancellationToken());
+                        return await DataLayer?.GetCurrentResult<TResult>(this, token);
+                    else return await DataLayer?.GetPreviousResult<TResult>(this, token);
                 default:
                     throw new Exception($"Unknown RunType {RunInfo.Type}");
             }

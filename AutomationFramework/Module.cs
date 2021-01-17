@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutomationFramework
@@ -10,37 +11,52 @@ namespace AutomationFramework
         }
 
         public Action<IStageBuilder> CreateChildren { get; init; }
-        public Func<IModule, Task> Work { get; init; }
+        public Func<IModule, CancellationToken, Task> Work { get; init; }
         public override string Name { get; init; } = "Default Module";
 
-        internal override async Task RunWork()
+        internal override async Task RunWork(CancellationToken token)
         {
             if (MeetsRunCriteria())
             {
-                CheckForCancellation();
-                await OnRunStart();
-                CheckForCancellation();
-                await DoWork();
-                CheckForCancellation();
-                await OnRunFinish();
+                await OnRunStart(token);
+                await DoWork(token);
+                await OnRunFinish(token);
             }
             else
             {
-                await SetStatus(StageStatuses.Bypassed);
+                await SetStatus(StageStatuses.Bypassed, token);
             }
         }
 
-        protected virtual async Task OnRunStart() => await SetStatus(StageStatuses.Running);
+        protected virtual async Task OnRunStart(CancellationToken token) => await SetStatus(StageStatuses.Running, token);
 
-        protected virtual async Task OnRunFinish() => await SetStatus(StageStatuses.Completed);
+        protected virtual async Task OnRunFinish(CancellationToken token) => await SetStatus(StageStatuses.Completed, token);
 
-        protected virtual async Task DoWork() => await Work?.Invoke(this);
+        protected virtual async Task DoWork(CancellationToken token) => await Work?.Invoke(this, token);
 
         public override async Task<IModule[]> InvokeCreateChildren()
         {
-            CheckForCancellation();
-            CreateChildren?.Invoke(Builder);
-            return await Task.FromResult(Builder.Build());
+            try
+            {
+                CreateChildren?.Invoke(Builder);
+                return await Task.FromResult(Builder.Build());
+            }
+
+            catch (OperationCanceledException)
+            {
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                Log(LogLevels.Warning, "Unable to create children. The stage has been cancelled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                /// We log here and in the kernel so the 
+                /// OnLog event gets a full view
+                Log(LogLevels.Error, "Unable to create children.");
+                Log(LogLevels.Error, ex);
+                throw;
+            }
         }
     }
 }

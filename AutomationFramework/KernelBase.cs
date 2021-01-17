@@ -131,6 +131,10 @@ namespace AutomationFramework
                     await BuildStage(child);
                 }
             }
+            catch (OperationCanceledException)
+            {
+                Logger?.Write(LogLevels.Warning, stage.StagePath, $"Stage {stage} was cancelled, unable to create children");
+            }
             catch (Exception ex)
             {
                 Logger?.Write(LogLevels.Error, stage.StagePath, $"Stage {stage} faulted during invoke create children: {ex}");

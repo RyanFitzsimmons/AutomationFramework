@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutomationFramework.UnitTests.TestSetup
@@ -13,10 +14,10 @@ namespace AutomationFramework.UnitTests.TestSetup
 
         public List<string> Actions { get; } = new List<string>();
 
-        protected override async Task<TestModuleResult> DoWork()
+        protected override async Task<TestModuleResult> DoWork(CancellationToken token)
         {
             Actions.Add("Doing Work");
-            return await base.DoWork();
+            return await base.DoWork(token);
         }
     }
 }

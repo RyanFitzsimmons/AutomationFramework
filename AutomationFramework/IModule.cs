@@ -14,8 +14,7 @@ namespace AutomationFramework
         StagePath StagePath { get; }
         Task Build();
         Task Run();
-        void Cancel();
         Task<IModule[]> InvokeCreateChildren();
-        CancellationToken GetCancellationToken();
+        void Cancel();
     }
 }

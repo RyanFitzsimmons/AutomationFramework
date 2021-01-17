@@ -10,12 +10,10 @@ namespace AutomationFramework
     /// </summary>
     public abstract class ModuleBase : IModule
     {
-        public ModuleBase(IStageBuilder builder)
-        {
-            Builder = builder;
-        }
+        public ModuleBase(IStageBuilder builder) => Builder = builder;
 
         private readonly CancellationTokenSource _cancellationSource = new CancellationTokenSource();
+        internal CancellationToken Token => _cancellationSource.Token;
 
         protected internal IStageBuilder Builder { get; }
         public IRunInfo RunInfo => Builder.RunInfo;
@@ -47,8 +45,9 @@ namespace AutomationFramework
         public event Action<IModule> OnBuild;
         public event Action<IModule> OnCompletion;
         public event Action<IModule> OnCancellation;
+        public event Action<IModule> OnError;
         /// <summary>
-        /// Be aware this is called from the kernel thread
+        /// Be aware this is called from the kernel context
         /// </summary>
         public event Action<IModule> PreCancellation;
 
@@ -59,7 +58,7 @@ namespace AutomationFramework
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
-                await DataLayer?.CreateStage(this, GetCancellationToken());
+                await DataLayer?.CreateStage(this, Token);
                 OnBuild?.Invoke(this);
             }
             catch (Exception ex)
@@ -77,17 +76,18 @@ namespace AutomationFramework
         {
             try
             {
-                if (IsEnabled) await RunWork();
-                else await SetStatus(StageStatuses.Disabled);
+                if (IsEnabled) await RunWork(Token);
+                else await SetStatus(StageStatuses.Disabled, Token);
             }
             catch (OperationCanceledException)
             {
-                /// We catch here to set the status of the stage
+                /// We catch here to set the status of the stage                
                 /// We log here and in the kernel so the 
                 /// OnLog event gets a full view
                 /// the exception is thrown again so the kernel knows 
                 /// not to create the children
-                await SetStatus(StageStatuses.Cancelled);
+                await SetStatus(StageStatuses.Cancelled, Token);
+                OnCancellation?.Invoke(this);
                 throw;
             }
             catch (Exception ex)
@@ -97,8 +97,9 @@ namespace AutomationFramework
                 /// OnLog event gets a full view
                 /// the exception is thrown again so the kernel knows 
                 /// not to create the children
-                await SetStatus(StageStatuses.Errored);
+                await SetStatus(StageStatuses.Errored, Token);
                 Log(LogLevels.Error, ex);
+                OnError?.Invoke(this);
                 throw;
             }
             finally
@@ -107,13 +108,13 @@ namespace AutomationFramework
             }
         }
 
-        internal abstract Task RunWork();
+        internal abstract Task RunWork(CancellationToken token);
 
-        protected async Task SetStatus(StageStatuses status)
+        protected async Task SetStatus(StageStatuses status, CancellationToken token)
         {
             Log(LogLevels.Information, status);
             if (status == StageStatuses.Cancelled) await SetCancelledStatus();
-            else await DataLayer?.SetStatus(this, status, GetCancellationToken());
+            else await DataLayer?.SetStatus(this, status, token);
         }
 
         private async Task SetCancelledStatus()
@@ -126,6 +127,11 @@ namespace AutomationFramework
             catch (OperationCanceledException)
             {
                 Log(LogLevels.Error, "Failed to set cancelled status in data layer");
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevels.Error, "Failed to set cancelled status in data layer");
+                Log(LogLevels.Error, ex);
             }
         }
 
@@ -140,27 +146,12 @@ namespace AutomationFramework
 
         public abstract Task<IModule[]> InvokeCreateChildren();
 
-        public CancellationToken GetCancellationToken() => _cancellationSource.Token;
-
         public void Cancel()
         {
             PreCancellation?.Invoke(this);
             _cancellationSource.Cancel();
         }
 
-        protected void CheckForCancellation()
-        {
-            var token = GetCancellationToken();
-            if (token.IsCancellationRequested)
-            {
-                OnCancellation?.Invoke(this);
-                token.ThrowIfCancellationRequested();
-            }
-        }
-
-        public override string ToString()
-        {
-            return StagePath.ToString() + " - " + Name;
-        }
+        public override string ToString() => StagePath.ToString() + " - " + Name;
     }
 }

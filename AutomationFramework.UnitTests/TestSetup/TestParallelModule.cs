@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AutomationFramework.UnitTests.TestSetup
@@ -14,14 +15,14 @@ namespace AutomationFramework.UnitTests.TestSetup
         public int RandomInteger { get; init; }
         public string[] Array { get; init; }
 
-        protected override async Task<TestModuleResult> DoWork()
+        protected override async Task<TestModuleResult> DoWork(CancellationToken token)
         {
             await Task.Run(() =>
             {
-                var task = Task.Delay(RandomInteger);
+                var task = Task.Delay(RandomInteger, token);
                 while (!task.IsCompleted)
                     foreach (var item in Array) Log(LogLevels.Information, item);
-            });
+            }, token);
             return new TestModuleResult()
             {
                 Name = Name,
