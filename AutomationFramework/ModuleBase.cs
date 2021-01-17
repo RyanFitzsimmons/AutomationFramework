@@ -58,7 +58,7 @@ namespace AutomationFramework
             try
             {
                 Log(LogLevels.Information, $"{Name} Building");
-                await DataLayer?.CreateStage(this, Token);
+                await (DataLayer?.CreateStage(this, Token) ?? Task.CompletedTask);
                 OnBuild?.Invoke(this);
             }
             catch (Exception ex)
@@ -114,7 +114,7 @@ namespace AutomationFramework
         {
             Log(LogLevels.Information, status);
             if (status == StageStatuses.Cancelled) await SetCancelledStatus();
-            else await DataLayer?.SetStatus(this, status, token);
+            else await (DataLayer?.SetStatus(this, status, token) ?? Task.CompletedTask);
         }
 
         private async Task SetCancelledStatus()
@@ -122,7 +122,7 @@ namespace AutomationFramework
             try
             {
                 var cancelStatusCancellationSource = new CancellationTokenSource(CancelStatusCancelAfter);
-                await DataLayer?.SetStatus(this, StageStatuses.Cancelled, cancelStatusCancellationSource.Token);
+                await (DataLayer?.SetStatus(this, StageStatuses.Cancelled, cancelStatusCancellationSource.Token) ?? Task.CompletedTask);
             }
             catch (OperationCanceledException)
             {

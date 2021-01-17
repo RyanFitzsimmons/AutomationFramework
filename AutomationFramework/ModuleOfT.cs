@@ -27,7 +27,8 @@ namespace AutomationFramework
             {
                 await OnRunStart(token);
                 var result = await DoWork(token);
-                await DataLayer?.SaveResult(this, result, token);
+                await (DataLayer?.SaveResult(this, result, token)
+                    ?? Task.CompletedTask);
                 await OnRunFinish(result, token);
             }
             else
@@ -73,15 +74,36 @@ namespace AutomationFramework
             switch(RunInfo.Type)
             {
                 case RunType.Standard:
-                    return await DataLayer?.GetCurrentResult<TResult>(this, token);
+                    {
+                        return await (DataLayer?.GetCurrentResult<TResult>(this, token) 
+                            ?? Task.FromResult<TResult>(default));
+                    }
                 case RunType.From:
-                    if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
-                        return await DataLayer?.GetCurrentResult<TResult>(this, token);
-                    else return await DataLayer?.GetPreviousResult<TResult>(this, token);
+                    {
+                        if (RunInfo.Path == StagePath || RunInfo.Path.IsDescendantOf(StagePath))
+                        {
+                            return await (DataLayer?.GetCurrentResult<TResult>(this, token)
+                                ?? Task.FromResult<TResult>(default));
+                        }
+                        else
+                        {
+                            return await (DataLayer?.GetPreviousResult<TResult>(this, token)
+                                ?? Task.FromResult<TResult>(default));
+                        }
+                    }
                 case RunType.Single:
-                    if (RunInfo.Path == StagePath)
-                        return await DataLayer?.GetCurrentResult<TResult>(this, token);
-                    else return await DataLayer?.GetPreviousResult<TResult>(this, token);
+                    {
+                        if (RunInfo.Path == StagePath)
+                        {
+                            return await (DataLayer?.GetCurrentResult<TResult>(this, token) 
+                                ?? Task.FromResult<TResult>(default));
+                        }
+                        else
+                        {
+                            return await (DataLayer?.GetPreviousResult<TResult>(this, token) 
+                                ?? Task.FromResult<TResult>(default));
+                        }
+                    }
                 default:
                     throw new Exception($"Unknown RunType {RunInfo.Type}");
             }
