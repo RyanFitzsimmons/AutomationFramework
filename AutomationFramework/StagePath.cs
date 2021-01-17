@@ -145,13 +145,7 @@ namespace AutomationFramework
             return true;
         }
 
-        public override string ToString()
-        {
-            string path = "";
-            foreach (var id in Indices)
-                path += id + "-";
-            return path.TrimEnd('-');
-        }
+        public override string ToString() => String.Join('-', Indices);
 
         public bool Equals(StagePath other) => other != null && this.ToString() == other.ToString();
 
