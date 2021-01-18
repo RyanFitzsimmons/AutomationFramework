@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 
 namespace AutomationFramework
 {
-    /// <summary>
-    /// Modules are not thread safe and because of this no variables should be 
-    /// accessed from outside the module while the stage is in progress.
-    /// </summary>
     public abstract class ModuleBase : IModule
     {
         public ModuleBase(IStageBuilder builder) => Builder = builder;
@@ -27,10 +23,10 @@ namespace AutomationFramework
         public abstract string Name { get; init; }
 
         /// <summary>
-        /// If zero all child stages will run in parallel. 
-        /// If Set to one the child stages will run one at a time.
+        /// If zero all child stages awaits will run in parallel. 
+        /// If set to one the child stages will run one at a time.
+        /// If greater than one this will be the limit of child awaits.
         /// Set to 1 by default.
-        /// WARNING: If this is set to run in parallel, the Work and CreateChildren functions of this stage and any child stages need to be thread safe.
         /// </summary>
         public virtual int MaxParallelChildren { get; init; } = 1;
 
@@ -41,18 +37,43 @@ namespace AutomationFramework
         /// </summary>
         public int CancelStatusCancelAfter { get; init; } = 10000;
 
+        /// <summary>
+        /// Raised everytime the module Log method is called
+        /// </summary>
         public event Action<IModule, LogLevels, object> OnLog;
+        /// <summary>
+        /// Raised at the end of the build method
+        /// </summary>
         public event Action<IModule> OnBuild;
+        /// <summary>
+        /// Raised at the end of the Run method
+        /// </summary>
         public event Action<IModule> OnCompletion;
+        /// <summary>
+        /// Raised at the end of Run cancellation
+        /// </summary>
         public event Action<IModule> OnCancellation;
+        /// <summary>
+        /// Raised at the end of Run Error
+        /// </summary>
         public event Action<IModule> OnError;
         /// <summary>
-        /// Be aware this is called from the kernel context
+        /// Raised just before the CancellationSource is cancelled. 
+        /// Be aware this is called from the kernel context.
         /// </summary>
         public event Action<IModule> PreCancellation;
 
+        /// <summary>
+        /// Raises the OnLog event
+        /// </summary>
+        /// <param name="level">Log level</param>
+        /// <param name="message">Message</param>
         public void Log(LogLevels level, object message) => OnLog?.Invoke(this, level, message);
 
+        /// <summary>
+        /// Creates the stage in the data layer. 
+        /// </summary>
+        /// <returns>Task</returns>
         public async Task Build()
         {
             try
@@ -72,6 +93,10 @@ namespace AutomationFramework
             }
         }
 
+        /// <summary>
+        /// Runs the work if the criteria is met
+        /// </summary>
+        /// <returns>Task</returns>
         public async Task Run()
         {
             try
@@ -108,8 +133,19 @@ namespace AutomationFramework
             }
         }
 
+        /// <summary>
+        /// Allows for run differences in inherited module classes
+        /// </summary>
+        /// <param name="token">Cancellation token</param>
+        /// <returns>Task</returns>
         internal abstract Task RunWork(CancellationToken token);
 
+        /// <summary>
+        /// Sets the stage status in the data layer
+        /// </summary>
+        /// <param name="status">Status</param>
+        /// <param name="token">Cancellation token</param>
+        /// <returns>Task</returns>
         protected async Task SetStatus(StageStatuses status, CancellationToken token)
         {
             Log(LogLevels.Information, status);
@@ -117,6 +153,10 @@ namespace AutomationFramework
             else await (DataLayer?.SetStatus(this, status, token) ?? Task.CompletedTask);
         }
 
+        /// <summary>
+        /// Handles cancellation data layer update
+        /// </summary>
+        /// <returns>Task</returns>
         private async Task SetCancelledStatus()
         {
             try
@@ -135,6 +175,10 @@ namespace AutomationFramework
             }
         }
 
+        /// <summary>
+        /// Checks if the stage can run
+        /// </summary>
+        /// <returns>True if the stage can run</returns>
         internal bool MeetsRunCriteria() =>
             RunInfo.Type switch
             {
@@ -144,14 +188,25 @@ namespace AutomationFramework
                 _ => throw new Exception("Unknown Run Type: " + RunInfo.Path),
             };
 
+        /// <summary>
+        /// Invokes create children delegates of inherited module classes
+        /// </summary>
+        /// <returns></returns>
         public abstract Task<IModule[]> InvokeCreateChildren();
 
+        /// <summary>
+        /// Cancels the stage
+        /// </summary>
         public void Cancel()
         {
             PreCancellation?.Invoke(this);
             _cancellationSource.Cancel();
         }
 
+        /// <summary>
+        /// A string of the stage path and name
+        /// </summary>
+        /// <returns>StagePath - Name</returns>
         public override string ToString() => StagePath.ToString() + " - " + Name;
     }
 }

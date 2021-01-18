@@ -18,8 +18,10 @@ namespace AutomationFramework
         {
             if (MeetsRunCriteria())
             {
+                await SetStatus(StageStatuses.Running, token);
                 await OnRunStart(token);
                 await DoWork(token);
+                await SetStatus(StageStatuses.Completed, token);
                 await OnRunFinish(token);
             }
             else
@@ -28,9 +30,9 @@ namespace AutomationFramework
             }
         }
 
-        protected virtual async Task OnRunStart(CancellationToken token) => await SetStatus(StageStatuses.Running, token);
+        protected virtual async Task OnRunStart(CancellationToken token) => await Task.CompletedTask;
 
-        protected virtual async Task OnRunFinish(CancellationToken token) => await SetStatus(StageStatuses.Completed, token);
+        protected virtual async Task OnRunFinish(CancellationToken token) => await Task.CompletedTask;
 
         protected virtual async Task DoWork(CancellationToken token) => await Work?.Invoke(this, token);
 
