@@ -56,7 +56,13 @@ namespace AutomationFramework
                 Logger?.Write(LogLevels.Fatal, $"{Name} threw an exception");
                 Logger?.Write(LogLevels.Fatal, ex);
             }
+            finally
+            {
+                await RunFinally();
+            }
         }
+
+        protected virtual async Task RunFinally() => await Task.CompletedTask;
 
         private async Task BuildInitialStages()
         {
