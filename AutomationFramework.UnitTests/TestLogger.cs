@@ -39,5 +39,10 @@ namespace AutomationFramework.UnitTests
                 return message.ToString();
             return $"{path} - {message}";
         }
+
+        public void Dispose()
+        {
+            Log.CloseAndFlush();
+        }
     }
 }
