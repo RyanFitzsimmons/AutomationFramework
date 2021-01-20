@@ -45,7 +45,8 @@ namespace AutomationFramework
         protected virtual async Task OnRunFinish(CancellationToken token) =>
             await SetStatus(StageStatuses.Completed, token);
 
-        protected virtual async Task DoWork(CancellationToken token) => await Work?.Invoke(this, token);
+        protected virtual async Task DoWork(CancellationToken token) => 
+            await (Work?.Invoke(this, token) ?? Task.CompletedTask);
 
         public override async Task<IModule[]> InvokeCreateChildren()
         {
@@ -54,7 +55,6 @@ namespace AutomationFramework
                 CreateChildren?.Invoke(Builder);
                 return await Task.FromResult(Builder.Build());
             }
-
             catch (OperationCanceledException)
             {
                 /// We log here and in the kernel so the 

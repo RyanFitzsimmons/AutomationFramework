@@ -58,7 +58,7 @@ namespace AutomationFramework
             await SetStatus(StageStatuses.Completed, token);
 
         protected virtual async Task<TResult> DoWork(CancellationToken token) => 
-            Work == null ? default : await Work.Invoke(this, token);
+            Work == null ? await Task.FromResult(default(TResult)) : await Work.Invoke(this, token);
 
         public override async Task<IModule[]> InvokeCreateChildren()
         {
