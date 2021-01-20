@@ -26,14 +26,12 @@ namespace AutomationFramework
         internal override async Task RunWork(CancellationToken token)
         {
             if (MeetsRunCriteria())
-            {
-                await SetStatus(StageStatuses.Running, token);
+            {                
                 await OnRunStart(token);
                 var result = await DoWork(token);
                 OnResult?.Invoke(this, result);
                 await (DataLayer?.SaveResult(this, result, token)
                     ?? Task.CompletedTask);
-                await SetStatus(StageStatuses.Completed, token);
                 await OnRunFinish(result, token);
             }
             else
@@ -42,9 +40,22 @@ namespace AutomationFramework
             }
         }
 
-        protected virtual async Task OnRunStart(CancellationToken token) => await Task.CompletedTask;
+        /// <summary>
+        /// Sets the status to running, can be overriden if a different status is required.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        protected virtual async Task OnRunStart(CancellationToken token) => 
+            await SetStatus(StageStatuses.Running, token);
 
-        protected virtual async Task OnRunFinish(TResult result, CancellationToken token) => await Task.CompletedTask;
+        /// <summary>
+        /// Sets the status to completed, can be overriden if a different status is required.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        protected virtual async Task OnRunFinish(TResult result, CancellationToken token) =>
+            await SetStatus(StageStatuses.Completed, token);
 
         protected virtual async Task<TResult> DoWork(CancellationToken token) => 
             Work == null ? default : await Work.Invoke(this, token);
