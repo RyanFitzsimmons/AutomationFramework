@@ -8,5 +8,9 @@
     <PackageDescription>A framework to assist in creating modular restartable code</PackageDescription>
     <RepositoryUrl>https://github.com/RyanFitzsimmons/AutomationFramework/tree/master/AutomationFramework</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>Automation Framework</Title>
+    <Description>A framework to assist in creating modular restartable code</Description>
+    <PackageProjectUrl>https://github.com/RyanFitzsimmons/AutomationFramework</PackageProjectUrl>
+    <PackageTags>Automation Restartable</PackageTags>
 
   </PropertyGroup></Project>
