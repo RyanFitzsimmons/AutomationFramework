@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <PackageId>AutomationFramework</PackageId>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Authors>Ryan Fitzsimmons</Authors>
     <PackageDescription>A framework to assist in creating modular restartable code</PackageDescription>
     <RepositoryUrl>https://github.com/RyanFitzsimmons/AutomationFramework/tree/master/AutomationFramework</RepositoryUrl>
@@ -12,5 +11,5 @@
     <Description>A framework to assist in creating modular restartable code</Description>
     <PackageProjectUrl>https://github.com/RyanFitzsimmons/AutomationFramework</PackageProjectUrl>
     <PackageTags>Automation Restartable</PackageTags>
-
-  </PropertyGroup></Project>
+  </PropertyGroup>
+</Project>
